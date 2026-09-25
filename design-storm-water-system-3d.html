@@ -37,6 +37,7 @@
   #detail .note { font-size: 11.5px; color: var(--panel-ink-2); }
   canvas.spark { width: 100%; height: 96px; display: block; margin-top: 6px; }
   canvas.spark.tall { height: 132px; }
+  canvas.spark.plume { height: 118px; }
   img.cam { width: 100%; display: block; border-radius: 8px; margin-top: 8px; }
   .spark-label { font-size: 11px; color: var(--panel-ink-2); margin-top: 8px; }
   .latest { font-size: 20px; font-weight: 600; margin: 2px 0 0; }
@@ -151,7 +152,7 @@
     Live data: USGS &amp; USDA NRCS &middot; Boundaries: USGS NLDI &middot;
     Pipelines &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> &middot;
     Storm radar: NEXRAD archive via Iowa State Mesonet &middot;
-    Foothills influent lab data &copy; 2026 <a href="https://www.denverwater.org/about-us/how-we-operate/public-records" target="_blank" rel="noopener">Denver Water</a>,
+    Foothills influent lab data and Strontia sonde profiles &copy; 2026 <a href="https://www.denverwater.org/about-us/how-we-operate/public-records" target="_blank" rel="noopener">Denver Water</a>,
     provisional, provided as is, no warranty of any kind.
     Built in the <a href="https://github.com/paulrayner/design-storm-2026" target="_blank" rel="noopener">Design Storm workspace</a>.
     Full <a href="data-terms.html" target="_blank" rel="noopener">data terms</a>.
@@ -413,6 +414,7 @@ function showDetail(item) {
     <div class="kind" style="color:${color}">${KIND_INTRO[kind] || kind}</div>
     <p>${item.blurb || ""}</p>
     ${item.elevation_ft ? `<p class="note">Elevation ${Math.round(item.elevation_ft).toLocaleString()} ft</p>` : ""}
+    ${item.id === "dam-strontia" ? `<p class="note">A profiling sonde has hung in this reservoir since April 2026. What it saw of the August storm: ${PLUME_LINK}.</p>` : ""}
     <div id="chartbox"></div>
     <div id="influentbox"></div>
     ${CAVEATS[item.kind] ? `<details class="caveat"><summary>What can go wrong with this reading</summary><p>${CAVEATS[item.kind]}</p></details>` : ""}
@@ -755,6 +757,7 @@ function tourExit() {
 }
 
 document.getElementById("tour-start").onclick = () => {
+  document.querySelector("details.howto").open = false;
   document.getElementById("tour-start").style.display = "none";
   document.getElementById("tourbar").style.display = "flex";
   tourGo(0);
@@ -765,11 +768,16 @@ document.getElementById("tour-back").onclick = () => state.tourStep > 0 && tourG
 document.getElementById("tour-exit").onclick = tourExit;
 
 const STORM = {
-  frames: [], flow: [], turb: [], captions: [],
-  idx: 0, timer: null,
+  frames: [], flow: [], turb: [], captions: [], plume: null,
+  stormFrames: 0, epilogueDays: [],
+  idx: 0, timer: null, inReservoir: false,
   view: { center: [-105.42, 39.3], zoom: 8.5, pitch: 42, bearing: 0 },
-  msPerFrame: 400,
+  reservoirView: { center: [-105.145, 39.425], zoom: 12.1, pitch: 62, bearing: 25 },
+  msPerFrame: 400, msPerEpilogueFrame: 2600,
 };
+
+const PLUME_PAGE = "design-storm-strontia-plume.html";
+const PLUME_LINK = `<a href="${PLUME_PAGE}" target="_blank" rel="noopener">Where the muddy water goes after it reaches the reservoir</a>`;
 
 function parseSeriesFile(file, param) {
   const ts = file.value.timeSeries.find((t) => t.variable.variableCode[0].value === param);
@@ -786,8 +794,36 @@ async function loadStorm() {
   ]);
   STORM.turb = parseSeriesFile(turbFile, "63680");
   STORM.flow = parseSeriesFile(flowFile, "00060");
-  STORM.frames = STORM.turb.map((d) => new Date(d.t));
+  STORM.plume = await fetchJson("water-system-3d/strontia-plume.json");
+  const stormFrames = STORM.turb.map((d) => new Date(d.t));
+  const lastStormDay = mdtDay(stormFrames[stormFrames.length - 1]);
+  STORM.epilogueDays = STORM.plume.dates.filter((day) => day > lastStormDay);
+  STORM.stormFrames = stormFrames.length;
+  STORM.frames = stormFrames.concat(STORM.epilogueDays.map((day) => new Date(day + "T12:00:00-06:00")));
   STORM.captions = buildCaptions();
+}
+
+function mdtDay(date) {
+  return new Date(date.getTime() - 6 * 3600000).toISOString().slice(0, 10);
+}
+
+function plumeDayIndex(frameIndex) {
+  return STORM.plume.dates.indexOf(mdtDay(STORM.frames[frameIndex]));
+}
+
+function isEpilogue(frameIndex) {
+  return frameIndex >= STORM.stormFrames;
+}
+
+function plumePeak(day) {
+  const row = STORM.plume.cells[STORM.plume.dates.indexOf(day)] || [];
+  const peak = row.reduce((best, v, i) => (v !== null && (best.v === null || v > best.v) ? { v, i } : best), { v: null, i: -1 });
+  return { ntu: peak.v === null ? null : Math.round(peak.v), depth: peak.i < 0 ? null : STORM.plume.bins[peak.i] };
+}
+
+function plumeToc(day) {
+  const v = STORM.plume.toc[STORM.plume.dates.indexOf(day)];
+  return v === null || v === undefined ? "no sample" : v.toFixed(1) + " mg/L";
 }
 
 function frameIndexAt(hour, minute, day) {
@@ -799,20 +835,32 @@ function frameIndexAt(hour, minute, day) {
 
 function buildCaptions() {
   const turbPeak = STORM.turb.reduce((best, d, i) => (d.v > STORM.turb[best].v ? i : best), 0);
-  const flowRise = STORM.flow.findIndex((d) => d.v > STORM.flow[0].v * 1.5);
+  const flowMin = Math.min(...STORM.flow.map((d) => d.v)), flowMax = Math.max(...STORM.flow.map((d) => d.v));
   return [
     { from: 0, text: "Midday, Aug 14: baseline. The river runs clear at about 2 FNU past the gage above Strontia." },
     { from: Math.max(0, frameIndexAt(13, 0, 14)),
       text: "1:00 PM: the conductance probe at the gage blips to 38 (its neighbors read about 300). It carries only the routine provisional flag. Nobody is paged." },
     { from: Math.max(0, frameIndexAt(17, 0, 14)),
       text: "Evening: monsoon cells train over the upper basin. Watch the radar paint the canyons above Strontia Springs." },
-    ...(flowRise > 0 ? [{ from: flowRise,
-      text: `The river answers: flow at the gage near Trumbull climbs past ${Math.round(STORM.flow[flowRise].v)} cubic ft/s.` }] : []),
     { from: turbPeak,
       text: `${formatFrameTime(STORM.frames[turbPeak])}: turbidity spikes to ${Math.round(STORM.turb[turbPeak].v)} FNU, from a baseline of 2. The sediment pulse is minutes from Strontia Springs Reservoir.` },
-    { from: Math.min(turbPeak + 12, STORM.frames.length - 1),
-      text: "The pulse decays through Aug 15, but the water that carried it is already in the reservoir, headed for the treatment plants." },
+    { from: Math.min(turbPeak + 12, STORM.stormFrames - 1),
+      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, which no flow gage watches. Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
+    ...STORM.epilogueDays.map((day, k) => ({ from: STORM.stormFrames + k, text: epilogueCaption(day) })),
   ];
+}
+
+const EPILOGUE_NOTES = {
+  "2026-08-16": (peak, toc) => `The reservoir, by depth: the cloud is now ${peak.depth} ft down at ${peak.ntu} NTU. And at the Foothills plant, organic carbon steps up to ${toc} from 2.0 the day before. Two days after the gage, the storm has arrived in the lab.`,
+  "2026-08-17": (peak, toc) => `The layer sinks to ${peak.depth} ft, ${peak.ntu} NTU. It works its way down rather than arriving at depth; the plant still reads ${toc}.`,
+  "2026-08-18": (peak, toc) => `${peak.depth} ft down and fading, ${peak.ntu} NTU. The intake that feeds the plant sits 198 ft below the surface, 150 ft deeper than this sonde can see.`,
+  "2026-08-19": (peak, toc) => `The record ends with the plume at ${peak.depth} ft and the plant back near ${toc}. The water took four hours; the signal took two days. The reservoir, not the river, is the clock.`,
+};
+
+function epilogueCaption(day) {
+  const note = EPILOGUE_NOTES[day];
+  const peak = plumePeak(day), toc = plumeToc(day);
+  return note ? note(peak, toc) : `${day}: sonde peak ${peak.ntu} NTU at ${peak.depth} ft; plant TOC ${toc}.`;
 }
 
 function formatFrameTime(date) {
@@ -836,7 +884,7 @@ function setRadarFrame(date) {
     paint: { "raster-opacity": 0.7, "raster-fade-duration": 0 } }, "basin-line");
 }
 
-const REPLAY_GAGES = ["gage-06701900", "gage-06707525"];
+const REPLAY_GAGES = ["gage-06701900", "gage-06707525", "dam-strontia", "plant-foothills"];
 
 function addReplayLabels() {
   if (map.getLayer("replay-labels")) return;
@@ -845,8 +893,9 @@ function addReplayLabels() {
     layout: {
       "text-field": ["get", "name"],
       "text-font": ["Noto Sans Regular"],
-      "text-size": 12.5, "text-offset": [0, 1.1], "text-anchor": "top",
-      "text-allow-overlap": true,
+      "text-size": 12.5, "text-radial-offset": 1.1,
+      "text-variable-anchor": ["top", "bottom", "left", "right"],
+      "text-justify": "auto",
     },
     paint: { "text-color": "#ffd166", "text-halo-color": "rgba(16,20,24,0.95)", "text-halo-width": 1.6 } });
 }
@@ -864,35 +913,99 @@ function currentCaption(i) {
 function replaySet(i) {
   STORM.idx = i;
   document.getElementById("replay-slider").value = i;
-  document.getElementById("replay-time").textContent = formatFrameTime(STORM.frames[i]);
+  document.getElementById("replay-time").textContent = replayTimeLabel(i);
   document.getElementById("replay-caption").textContent = currentCaption(i);
-  setRadarFrame(STORM.frames[i]);
-  drawSpark(document.getElementById("replay-flow"), STORM.flow, "#3987e5", i);
-  drawSpark(document.getElementById("replay-turb"), STORM.turb, "#d95926", i);
+  isEpilogue(i) ? removeRadar() : setRadarFrame(STORM.frames[i]);
+  replayCamera(isEpilogue(i));
+  drawSpark(document.getElementById("replay-turb"), STORM.turb, "#d95926", Math.min(i, STORM.stormFrames - 1));
+  drawPlume(document.getElementById("replay-plume"), STORM.plume, plumeDayIndex(i));
+  drawSpark(document.getElementById("replay-toc"), plumeSeries(STORM.plume.toc), "#199e70", plumeDayIndex(i));
+}
+
+function replayTimeLabel(i) {
+  if (!isEpilogue(i)) return formatFrameTime(STORM.frames[i]);
+  return STORM.frames[i].toLocaleDateString("en-US", { timeZone: "America/Denver", weekday: "short",
+    month: "short", day: "numeric" }) + " · four sonde casts";
+}
+
+function replayCamera(inReservoir) {
+  if (inReservoir === STORM.inReservoir) return;
+  STORM.inReservoir = inReservoir;
+  map.flyTo({ ...(inReservoir ? STORM.reservoirView : STORM.view), speed: 0.7 });
+}
+
+function plumeSeries(values) {
+  return values.map((v, i) => ({ t: STORM.plume.dates[i], v })).filter((d) => d.v !== null);
+}
+
+function removeRadar() {
+  if (map.getLayer("radar")) map.removeLayer("radar");
+  if (map.getSource("radar")) map.removeSource("radar");
+}
+
+const PLUME_RAMP = ["#f3efe7", "#e7d9be", "#d8be8d", "#c29e5e", "#a67c3c", "#825b25", "#5c3d15"];
+const PLUME_LOG_MIN = Math.log(0.8), PLUME_LOG_MAX = Math.log(20.5);
+
+function plumeColor(v) {
+  if (v === null) return "rgba(255,255,255,0.06)";
+  const t = (Math.log(v) - PLUME_LOG_MIN) / (PLUME_LOG_MAX - PLUME_LOG_MIN);
+  return PLUME_RAMP[Math.floor(Math.max(0, Math.min(0.999, t)) * PLUME_RAMP.length)];
+}
+
+function drawPlume(canvas, plume, dayIndex) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 4, bottom: 15, left: 2, right: 44 };
+  const cols = plume.dates.length, rows = plume.bins.length;
+  const cw = (w - pad.left - pad.right) / cols, rh = (h - pad.top - pad.bottom) / rows;
+  plume.cells.forEach((row, d) => row.forEach((v, b) => {
+    g.fillStyle = plumeColor(v);
+    g.fillRect(pad.left + d * cw, pad.top + b * rh, cw + 0.5, rh + 0.5);
+  }));
+  g.fillStyle = "rgba(184,192,200,0.95)"; g.font = "10px -apple-system, sans-serif"; g.textAlign = "left";
+  for (const depth of [1, 21, 41]) {
+    const b = plume.bins.indexOf(depth);
+    if (b >= 0) g.fillText(depth + " ft", w - pad.right + 4, pad.top + (b + 0.5) * rh + 3.5);
+  }
+  g.textAlign = "center";
+  plume.dates.forEach((day, d) => {
+    if (d % 4 === 1) g.fillText(formatDate(day), pad.left + (d + 0.5) * cw, h - 3);
+  });
+  if (dayIndex < 0) return;
+  g.strokeStyle = "#f2f4f6"; g.lineWidth = 2;
+  g.strokeRect(pad.left + dayIndex * cw + 1, pad.top + 1, cw - 2, rows * rh - 2);
 }
 
 function replayPlaying() { return STORM.timer !== null; }
 
 function replayPause() {
-  clearInterval(STORM.timer);
+  clearTimeout(STORM.timer);
   STORM.timer = null;
   document.getElementById("replay-play").textContent = "Play";
 }
 
 function replayPlay() {
   if (STORM.idx >= STORM.frames.length - 1) STORM.idx = 0;
-  STORM.timer = setInterval(() => {
-    STORM.idx >= STORM.frames.length - 1 ? replayPause() : replaySet(STORM.idx + 1);
-  }, STORM.msPerFrame);
+  const step = () => {
+    if (STORM.idx >= STORM.frames.length - 1) { replayPause(); return; }
+    replaySet(STORM.idx + 1);
+    STORM.timer = setTimeout(step, isEpilogue(STORM.idx) ? STORM.msPerEpilogueFrame : STORM.msPerFrame);
+  };
+  STORM.timer = setTimeout(step, STORM.msPerFrame);
   document.getElementById("replay-play").textContent = "Pause";
 }
 
 async function replayStart() {
+  document.querySelector("details.howto").open = false;
   document.getElementById("tour-start").style.display = "none";
   document.getElementById("replay-start").style.display = "none";
   document.getElementById("detail").innerHTML = "";
   document.getElementById("replaybar").style.display = "block";
   document.getElementById("replay-caption").textContent = "Loading the storm record…";
+  STORM.inReservoir = false;
   map.flyTo({ ...STORM.view, speed: 0.9 });
   try {
     await loadStorm();
@@ -902,10 +1015,13 @@ async function replayStart() {
   }
   document.getElementById("replay-slider").max = STORM.frames.length - 1;
   document.getElementById("replay-charts").innerHTML = `
-    <div class="spark-label">Flow at the gage near Trumbull, cubic ft/s</div>
-    <canvas class="spark" id="replay-flow"></canvas>
     <div class="spark-label">Turbidity at the gage above Strontia, FNU</div>
-    <canvas class="spark" id="replay-turb"></canvas>`;
+    <canvas class="spark" id="replay-turb"></canvas>
+    <div class="spark-label">Inside the reservoir, by depth: turbidity from the Strontia sonde, Aug 8 to 19 (darker is muddier, surface at top)</div>
+    <canvas class="spark plume" id="replay-plume"></canvas>
+    <div class="spark-label">Organic carbon arriving at the Foothills plant (TOC), mg/L</div>
+    <canvas class="spark" id="replay-toc"></canvas>
+    <div class="spark-label">Sonde and plant data are Denver Water's, provisional. The full analysis, with the reservoir in section: ${PLUME_LINK}.</div>`;
   addReplayLabels();
   replaySet(0);
   replayPlay();
@@ -914,8 +1030,8 @@ async function replayStart() {
 function replayExit() {
   replayPause();
   removeReplayLabels();
-  if (map.getLayer("radar")) map.removeLayer("radar");
-  if (map.getSource("radar")) map.removeSource("radar");
+  removeRadar();
+  STORM.inReservoir = false;
   document.getElementById("replaybar").style.display = "none";
   document.getElementById("tour-start").style.display = "block";
   document.getElementById("replay-start").style.display = "block";

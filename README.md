@@ -44,6 +44,17 @@ Continental Divide, on real terrain, with live readings behind each marker. It r
 in the browser; click anything. It doubles as a worked example of Scenario 3, and as
 a starting point for the viewing application Scenario 1 asks for.
 
+The storm replay on that map now follows the August 14 storm past the gage:
+into Strontia Springs Reservoir, where the new profiling sonde watched the muddy
+layer work its way down over four days, and on to the Foothills lab, where
+organic carbon stepped up two days after the gage spiked.
+[`design-storm-strontia-plume.html`](design-storm-strontia-plume.html) is the
+full write-up behind that sequence: the river, the reservoir by depth, and the
+plant on one chart; the reservoir in section (the sonde reaches 48 ft down, the
+intake sits at 198 ft); and the finding that the gage thirteen miles upstream
+never rose, so the runoff entered from the reach no flow gage watches. It ends
+with three open questions for Denver Water.
+
 It is `design-storm-water-system-3d.html` here if you want to take it apart. It
 fetches JSON, so run `python3 serve.py` and open
 <http://localhost:8765/design-storm-water-system-3d> rather than the file directly.
@@ -136,6 +147,7 @@ need rather than editing in place.
 | [`guide.md`](guide.md) | The domain and the models explained from zero. |
 | [`glossary.md`](glossary.md) | Every water and statistics term used here, defined. |
 | `design-storm-water-system-3d.html` | The 3D map, plus `water-system-3d/` and `strontia-brief/` for the data it draws and `serve.py` to serve it. |
+| `design-storm-strontia-plume.html` | Where the muddy water goes after it reaches the reservoir: the August storm as the Strontia sonde saw it, with images in `strontia-plume/`. |
 
 ## The data
 

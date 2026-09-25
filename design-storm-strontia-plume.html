@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Strontia Plume Depth</title>
+<link rel="icon" href="data:,">
+<style>body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style>
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #F4F4F1;
+    --surface: #FFFFFF;
+    --ink: #15171A;
+    --ink-2: #4A4F55;
+    --ink-3: #7C838B;
+    --rule: #DFDFD9;
+    --rule-soft: #ECECE6;
+    --river: #14656E;
+    --intake: #A93A2C;
+    --s0: #F3EFE7;
+    --s1: #E7D9BE;
+    --s2: #D8BE8D;
+    --s3: #C29E5E;
+    --s4: #A67C3C;
+    --s5: #825B25;
+    --s6: #5C3D15;
+    --rock: #CFC9BE;
+    --rock-deep: #B8B1A4;
+    --water: #DCE6E7;
+    --sed: #D8BE8D;
+    --display: "Spectral", Georgia, "Times New Roman", serif;
+    --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 80px;
+  }
+
+  .wrap { max-width: 1060px; margin: 0 auto; }
+  .prose { max-width: 66ch; }
+
+  header { padding: 56px 0 28px; border-bottom: 1px solid var(--rule); margin-bottom: 36px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(30px, 4.6vw, 46px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+  .standfirst {
+    font-family: var(--display);
+    font-size: 19px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 58ch;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 27px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+  p { margin: 0 0 16px; }
+  .lede { color: var(--ink-2); margin-bottom: 26px; }
+
+  section { margin-bottom: 64px; }
+
+  figure {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 24px 24px 20px;
+  }
+  .figscroll { overflow-x: auto; }
+  figcaption a { color: var(--river); text-decoration: none; border-bottom: 1px solid rgba(20,101,110,0.35); }
+  figcaption a:hover { border-bottom-color: var(--river); }
+  figcaption {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule-soft);
+    max-width: 78ch;
+  }
+  svg { display: block; width: 100%; height: auto; }
+  .fignum {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 4px;
+  }
+
+  /* chart type */
+  .ax { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+  .axlab { font-family: var(--body); font-size: 11px; font-weight: 600; fill: var(--ink-2); letter-spacing: 0.02em; }
+  .panel-title { font-family: var(--body); font-size: 12px; font-weight: 600; fill: var(--ink-2); }
+  .gridline { stroke: var(--rule-soft); stroke-width: 1; }
+  .cell { stroke: var(--surface); stroke-width: 1; cursor: crosshair; }
+  .cell:hover { stroke: var(--ink); stroke-width: 1.5; }
+
+  /* cross-section type */
+  .xlab { font-family: var(--body); font-size: 12px; fill: var(--ink-2); }
+  .xlab-strong { font-family: var(--body); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .xnum { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
+
+  /* term tooltips */
+  .term {
+    border-bottom: 1px dotted var(--river);
+    cursor: help;
+    color: inherit;
+  }
+  .term:focus-visible { outline: 2px solid var(--river); outline-offset: 2px; }
+
+  #tip {
+    position: fixed;
+    z-index: 50;
+    max-width: 320px;
+    background: var(--ink);
+    color: #F7F7F4;
+    font-family: var(--body);
+    font-size: 13px;
+    line-height: 1.45;
+    padding: 10px 13px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  }
+  #tip.on { opacity: 1; }
+  #tip b { font-weight: 600; color: #fff; display: block; margin-bottom: 3px; }
+  #tip .val { font-family: var(--mono); }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .ramp { display: flex; }
+  .ramp i { width: 30px; height: 11px; display: block; }
+  .legend .cap { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0;
+    margin-top: 28px;
+    border-top: 1px solid var(--rule);
+  }
+  .note {
+    padding: 18px 22px 18px 0;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .note:last-child { border-right: none; }
+  .note p { font-size: 14px; line-height: 1.55; color: var(--ink-2); margin: 0; }
+  .note .k {
+    font-family: var(--mono);
+    font-size: 21px;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .shot img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid var(--rule);
+  }
+  .shot .when {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 10px 0 4px;
+  }
+  .shot p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0; }
+  .shot .verdict { font-weight: 600; color: var(--ink); }
+
+  .plan {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(260px, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .plan { grid-template-columns: 1fr; } }
+  .planimg { background: #FBFAF6; border: 1px solid var(--rule); padding: 10px; }
+  .planimg img { width: 100%; height: auto; display: block; }
+  .planread h3 { margin-bottom: 10px; }
+  .planread p { font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+  .planread b { color: var(--ink); font-weight: 600; }
+
+  .sources { max-width: 82ch; margin-bottom: 44px; }
+  .sources h2 { margin-bottom: 4px; }
+  .sources > p { font-size: 14px; color: var(--ink-2); margin-bottom: 22px; }
+  .sources ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: src;
+    border-top: 1px solid var(--rule);
+  }
+  .sources li {
+    counter-increment: src;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 4px 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .sources li::before {
+    content: counter(src);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    padding-top: 3px;
+  }
+  .sources .what { color: var(--ink-2); }
+  .sources .what b { font-weight: 600; color: var(--ink); }
+  .sources a {
+    grid-column: 2;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--river);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(20, 101, 110, 0.3);
+    word-break: break-all;
+    justify-self: start;
+  }
+  .sources a:hover { border-bottom-color: var(--river); }
+  .sources a:focus-visible { outline: 2px solid var(--river); outline-offset: 2px; }
+
+  .disclaimer {
+    border-top: 1px solid var(--rule);
+    padding-top: 22px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-3);
+    max-width: 78ch;
+  }
+  .disclaimer strong { color: var(--ink-2); font-weight: 600; }
+
+  .openq { border-left: 3px solid var(--intake); padding-left: 20px; }
+  .openq li { margin-bottom: 10px; color: var(--ink-2); }
+  ul { padding-left: 20px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Explore DDD 2026 &middot; Design Storm &middot; Denver Water</p>
+    <h1>Where the muddy water goes after it reaches the reservoir</h1>
+    <p class="standfirst">Thirty days in which a storm upstream turned the South Platte brown, and a new instrument watched what happened next.</p>
+  </header>
+
+  <section>
+    <div class="prose">
+      <h2>Reading the plume</h2>
+      <p class="lede">Until April 2026 there was one <span class="term" data-t="Sensor" data-d="An instrument that measures something automatically and reports it without a person present.">sensor</span> in this story: a US Geological Survey gage sitting in the river <em>above</em> Strontia Springs Reservoir. In April, Denver Water lowered a second one <em>inside</em> the reservoir. The chart below puts them together for the first time.</p>
+      <p>The strip along the top is the river arriving. The block below it is the reservoir itself, drawn as a column of water from the surface down, one row per depth, with each day&rsquo;s reading coloured by how <span class="term" data-t="Turbidity" data-d="How cloudy the water is. Measured by shining light through a sample and reading how much scatters off suspended particles. Higher means muddier.">cloudy</span> the water was. The thin rail underneath is what the treatment plant measured in the water it received.</p>
+    </div>
+
+    <figure>
+      <p class="fignum">Figure 1 &middot; 21 July to 19 August 2026</p>
+      <div class="figscroll">
+        <svg viewBox="0 0 980 560" role="img" aria-label="Three aligned panels: river turbidity above the reservoir, a depth-by-day heatmap of turbidity inside the reservoir, and plant influent total organic carbon.">
+          <g id="chart"></g>
+        </svg>
+      </div>
+      <div class="legend">
+        <span class="cap">Clearer</span>
+        <span class="ramp">
+          <i style="background:var(--s0)"></i><i style="background:var(--s1)"></i><i style="background:var(--s2)"></i><i style="background:var(--s3)"></i><i style="background:var(--s4)"></i><i style="background:var(--s5)"></i><i style="background:var(--s6)"></i>
+        </span>
+        <span class="cap">Muddier &middot; 0.8 to 20 <span class="term" data-t="NTU" data-d="Nephelometric Turbidity Unit, the standard measure of cloudiness. Clear tap water is under 1. Around 2 to 3 is normal for this river. Above about 20 the water looks visibly brown.">NTU</span></span>
+      </div>
+      <figcaption>Each cell is the middle reading of that day at that depth, taken from four passes a day. The middle value is used rather than the average so a single bad reading cannot move the cell. The three deepest readings of every pass are excluded: the instrument stirs up sediment when it starts, producing spikes of up to 2,438 NTU that are an artefact of the measurement rather than the water. River turbidity is drawn on a folding scale because its peaks are a hundred times its baseline. Depth is in units as recorded in the file, which are almost certainly feet but are not labelled anywhere in it. The choice of daily statistic matters less than it might seem: on a typical day the highest and lowest of the four passes differ by under half a unit at every depth. It only bites during an event, and only in the upper column. Taking each day&rsquo;s highest pass instead of its middle one would roughly double the peak cell, from 20 to 43, while leaving the deepest rows almost untouched, since their worst single reading in the whole month is 4.7.</figcaption>
+    </figure>
+
+    <div class="notes">
+      <div class="note">
+        <p><span class="k">1 day</span>The delay between the river spiking and the reservoir surface responding. Measured across all thirty days, surface cloudiness follows the river most closely at a one-day offset.</p>
+      </div>
+      <div class="note">
+        <p><span class="k">3&ndash;4 days</span>The delay before mid-depth water responds. The muddy layer does not arrive at depth, it works its way down.</p>
+      </div>
+      <div class="note">
+        <p><span class="k">4 hours</span>How long Denver Water&rsquo;s raw water group says the water itself takes to travel from the gage to the plant. The days in this chart are the reservoir, not the river.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>Thirteen miles upstream, the river stayed clear</h2>
+      <p class="lede">The US Geological Survey runs 1,332 river cameras, sixty of them in Colorado. None sits at Strontia Springs. The nearest on this river is twelve and a half miles above the reservoir, below Brush Creek near Trumbull, and it photographs the water every fifteen minutes in daylight. The archive is public, so we can look at the two middays either side of the storm.</p>
+    </div>
+
+    <figure>
+      <p class="fignum">Figure 2 &middot; South Platte below Brush Creek near Trumbull</p>
+      <div class="pair">
+        <div class="shot">
+          <img src="strontia-plume/trumbull-2026-08-14.jpg" alt="The South Platte River in a pine canyon at noon on 14 August 2026. The water is clear enough to see the gravel and weed of the streambed across the whole channel.">
+          <p class="when">Friday 14 August, 12:00 &middot; the day before</p>
+          <p>Clear water. The streambed is visible right across the channel, gravel and green weed and all.</p>
+        </div>
+        <div class="shot">
+          <img src="strontia-plume/trumbull-2026-08-15.jpg" alt="The same view at 12:16pm on 15 August 2026. The water is still clear with the streambed visible, and a person in a hat is fly fishing in the shallows with a dog on the bank.">
+          <p class="when">Saturday 15 August, 12:16 &middot; hours after the spike</p>
+          <p><span class="verdict">Still clear.</span> Same gravel, same weed, and someone standing in it fly fishing with a dog on the bank.</p>
+        </div>
+      </div>
+      <figcaption>Photographs by the US Geological Survey, retrieved from its public camera archive. USGS-produced imagery is in the US public domain. The 7am frame that morning is fogged by condensation on the lens, so midday is the only clean look on the 15th.</figcaption>
+    </figure>
+
+    <div class="prose" style="margin-top:28px">
+      <p>The flow record agrees with the photographs. Through the whole storm this gage held flat between 134 and 138 <span class="term" data-t="Cubic feet per second" data-d="The standard measure of how much water is moving past a point. One cubic foot per second is about seven and a half gallons every second. A flat reading means no runoff arrived.">cubic feet per second</span>, with no runoff pulse at all.</p>
+      <p>So whatever turned the water brown at the reservoir did not come down the upper South Platte. It entered somewhere in the thirteen miles below this camera: either the North Fork, which joins the main stem in that reach, or a side drainage closer to the dam. That is a question a team could chase with nothing but public data.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>What the instrument can and cannot see</h2>
+      <p class="lede">The reservoir is more than two hundred feet deep at the dam. The opening that sends water to the treatment plant sits within a few feet of the bottom. The new instrument reaches 48 feet down.</p>
+    </div>
+
+    <figure>
+      <p class="fignum">Figure 3 &middot; Strontia Springs Reservoir in section</p>
+      <div class="figscroll">
+        <svg viewBox="0 0 1120 520" role="img" aria-label="Cross-section of Strontia Springs Reservoir showing the dam, the water surface at 5,994 feet, the profiler reaching 48 feet down, and the intake at 5,796 feet, 150 feet below the profiler's deepest reading.">
+          <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#A93A2C"></path>
+            </marker>
+          </defs>
+
+          <!-- sky / air -->
+          <rect x="0" y="0" width="1120" height="520" fill="#FFFFFF"></rect>
+
+          <!-- rock mass -->
+          <path d="M60,470 L60,132 L110,120 L200,150 L300,205 L420,262 L560,320 L700,373 L700,470 Z" fill="#CFC9BE"></path>
+
+          <!-- water body -->
+          <path d="M70,101 L700,101 L700,373 L560,320 L420,262 L300,205 L200,150 L110,120 Z" fill="#DCE6E7"></path>
+
+          <!-- sediment wedge in the upper reservoir -->
+          <path d="M110,120 L200,150 L300,205 L420,262 L420,272 L300,217 L200,161 L110,130 Z" fill="#D8BE8D"></path>
+
+          <!-- dam -->
+          <path d="M700,54 L730,54 L748,470 L700,470 Z" fill="#B8B1A4"></path>
+          <path d="M700,54 L730,54 L748,470 L700,470 Z" fill="none" stroke="#8D8779" stroke-width="1"></path>
+
+          <!-- water surface line -->
+          <line x1="70" y1="101" x2="700" y2="101" stroke="#4A7F85" stroke-width="1.5"></line>
+
+          <!-- elevation scale -->
+          <line x1="805" y1="54" x2="805" y2="470" stroke="#DFDFD9" stroke-width="1"></line>
+          <g class="xnum">
+            <line x1="801" y1="54" x2="809" y2="54" stroke="#BFBFB8"></line>
+            <text x="815" y="58">6,029 ft &middot; dam crest</text>
+            <line x1="801" y1="101" x2="809" y2="101" stroke="#BFBFB8"></line>
+            <text x="815" y="105">5,994 ft &middot; water surface</text>
+            <line x1="801" y1="164" x2="809" y2="164" stroke="#BFBFB8"></line>
+            <text x="815" y="168">5,946 ft &middot; profiler stops</text>
+            <line x1="801" y1="360" x2="809" y2="360" stroke="#BFBFB8"></line>
+            <text x="815" y="364">5,796 ft &middot; intake</text>
+            <line x1="801" y1="373" x2="809" y2="373" stroke="#BFBFB8"></line>
+            <text x="815" y="377">5,786 ft &middot; streambed at the dam</text>
+            <line x1="801" y1="439" x2="809" y2="439" stroke="#BFBFB8"></line>
+            <text x="815" y="443">5,737 ft &middot; dam foundation</text>
+          </g>
+
+          <!-- profiler -->
+          <line x1="640" y1="101" x2="640" y2="164" stroke="#15171A" stroke-width="2"></line>
+          <circle cx="640" cy="99" r="5" fill="#15171A"></circle>
+          <rect x="634" y="158" width="12" height="9" rx="1" fill="#15171A"></rect>
+          <g class="xlab-strong"><text x="600" y="88" text-anchor="end">Profiler</text></g>
+          <g class="xlab"><text x="600" y="104" text-anchor="end">reaches 48 ft down</text></g>
+          <line x1="606" y1="84" x2="634" y2="99" stroke="#15171A" stroke-width="1"></line>
+
+          <!-- unobserved gap bracket -->
+          <path d="M672,164 L682,164 L682,360 L672,360" fill="none" stroke="#A93A2C" stroke-width="1.5"></path>
+          <g class="xlab-strong" fill="#A93A2C"><text x="690" y="252">150 ft</text></g>
+          <g class="xlab" fill="#A93A2C"><text x="690" y="268">never measured</text></g>
+
+          <!-- intake -->
+          <circle cx="700" cy="360" r="6" fill="#A93A2C"></circle>
+          <line x1="706" y1="360" x2="770" y2="360" stroke="#A93A2C" stroke-width="2" marker-end="url(#arrowhead)"></line>
+          <g class="xlab-strong" fill="#A93A2C"><text x="560" y="352" text-anchor="end">Intake to the Foothills plant</text></g>
+          <g class="xlab" fill="#A93A2C"><text x="560" y="368" text-anchor="end">fixed, 198 ft below the surface</text></g>
+          <line x1="566" y1="348" x2="692" y2="358" stroke="#A93A2C" stroke-width="1"></line>
+
+          <!-- sediment label -->
+          <g class="xlab"><text x="250" y="196">Accumulated sediment</text></g>
+          <line x1="248" y1="200" x2="230" y2="176" stroke="#9A8A64" stroke-width="1"></line>
+
+          <!-- river inflow -->
+          <g class="xlab-strong"><text x="60" y="92" text-anchor="start">River in</text></g>
+          <line x1="30" y1="101" x2="68" y2="101" stroke="#14656E" stroke-width="2.5"></line>
+
+          <!-- length scale -->
+          <line x1="70" y1="492" x2="700" y2="492" stroke="#7C838B" stroke-width="1"></line>
+          <line x1="70" y1="487" x2="70" y2="497" stroke="#7C838B" stroke-width="1"></line>
+          <line x1="700" y1="487" x2="700" y2="497" stroke="#7C838B" stroke-width="1"></line>
+          <g class="xnum"><text x="385" y="508" text-anchor="middle">1.7 miles, dam at right</text></g>
+        </svg>
+      </div>
+      <figcaption>Elevations come from Denver Water&rsquo;s 2020 federal hydropower licensing assessment and from the 1977 Foothills Project environmental impact statement, whose site plan of the dam shows the pre-dam river channel running between the 5,780 and 5,800 foot contours. The streambed is drawn at 5,786 feet, which is the 6,029-foot crest less the dam&rsquo;s stated height of 243 feet above the channel, putting the deepest water at roughly 216 feet at normal pool. Denver Water&rsquo;s 2022 sediment solicitation gives a maximum depth of about 258 feet; that figure measures down to the excavated foundation rather than the riverbed, so this drawing does not use it, and the 5,737-foot foundation is marked separately for reference. The water surface shown, 5,994 feet, is the daily average for August 2026 from Colorado&rsquo;s state water agency. The profiler&rsquo;s position in the reservoir is not published anywhere; it is drawn near the dam because that is where every historic monitoring station sits, but that placement is an assumption rather than a fact. Its depth span is drawn as feet; if the units turned out to be metres the instrument would reach 157 feet and still stop above the intake.</figcaption>
+    </figure>
+
+    <figure style="margin-top:28px">
+      <p class="fignum">Figure 4 &middot; Proposed general layout, Strontia Springs Dam, 1977</p>
+      <div class="plan">
+        <div class="planimg"><img src="strontia-plume/foothills-eis-1977-siteplan.jpg" alt="Engineering site plan of Strontia Springs Dam drawn in 1977, showing the arch dam across the South Platte River with twenty-foot contour lines from 5,780 to 6,160 feet, the hexagonal Denver Water intake structure, the Aurora intake structure and Rampart Tunnel, the ten-foot-six-inch Foothills Tunnel, service and auxiliary spillways, valves, stilling pool and diversion tunnel."></div>
+        <div class="planread">
+          <h3>What to look for</h3>
+          <p>The <b>hexagonal intake structure</b> on the right bank is the one that matters here. It is the tower whose opening sits at 5,796 feet, and the dotted line leaving it is the <b>ten-foot-six-inch Foothills Tunnel</b>, which is the actual link from this reservoir to the treatment plant.</p>
+          <p>Aurora has its own intake alongside, with the <b>Rampart Tunnel</b> running off to its own system. The <b>contour lines are twenty feet apart</b>, labelled 5,780 up to 6,160, and the river channel between them is what settles how deep the reservoir really is: it runs between the 5,780 and 5,800 lines.</p>
+          <p>The three boxed elevations are construction works rather than natural ground: the stilling pool floor at 5,751, and the two cofferdams at 5,794 and 5,819 that held the river back while the dam was built.</p>
+        </div>
+      </div>
+      <figcaption>Drawn by the Foothills Project consultants for the Bureau of Land Management&rsquo;s 1977 draft environmental impact statement, at one inch to a hundred feet. A US federal work, in the public domain. This is the <em>proposed</em> layout rather than a record of what was built, and the faint text across it is print showing through from the reverse of the page.</figcaption>
+    </figure>
+
+    <figure style="margin-top:28px">
+      <p class="fignum">Figure 5 &middot; The outlet works, from downstream</p>
+      <img src="strontia-plume/strontia-outlet-works.jpg" style="width:100%;height:auto;display:block;border:1px solid var(--rule)" alt="The downstream face of Strontia Springs Dam. Three ring-jet valves with red handwheels sit on a gallery at the base of the concrete arch; one is discharging a white plume of water into the mist-filled plunge pool below. A gravel service road curves along the left bank between pines and granite.">
+      <div class="prose" style="margin-top:18px">
+        <p>The same valves that Figure 4 labels in plan, seen for real. Three ring-jet valves on their gallery at the foot of the arch, one of them running, throwing water into the plunge pool the drawing marks as the stilling pool at 5,751 feet. The gravel service road on the left is the only way in, which is part of why no public camera watches this place.</p>
+        <p><b>These are not the intake.</b> The outlet works sends water down the river below the dam. The opening that feeds the treatment plant is the hexagonal tower on the other side, fifty feet deeper, and it is never visible from anywhere.</p>
+      </div>
+      <figcaption>Photograph taken 10 June 2023 by <a href="https://www.flickr.com/people/33499543@N08" target="_blank" rel="noopener">mark byzewski</a>, published on Wikimedia Commons under a <a href="https://creativecommons.org/licenses/by/2.0" target="_blank" rel="noopener">Creative Commons Attribution 2.0</a> licence and reproduced here under its terms. <a href="https://commons.wikimedia.org/wiki/File:2023-06-10_-_Waterton_Canyon_-_219.jpg" target="_blank" rel="noopener">Source file</a>.</figcaption>
+    </figure>
+
+    <figure style="margin-top:28px">
+      <p class="fignum">Figure 6 &middot; The canyon at the dam, measured</p>
+      <div class="figscroll">
+        <svg viewBox="0 0 980 470" role="img" aria-label="An east-west cross-section of Waterton Canyon at Strontia Springs Dam, built from one-metre laser elevation data. Rock walls rise more than three hundred feet above a flat water surface at 5,993 feet. Below the water, the profiler's 48-foot reach and the intake at 5,796 feet are marked against an inferred channel bottom.">
+          <g id="canyon"></g>
+        </svg>
+      </div>
+      <figcaption>Ground elevations sampled every 25 feet along an east&ndash;west line through the dam from the US Geological Survey&rsquo;s one-metre laser survey of the Front Range, which is public and free to download. Laser light does not pass through water, so everything above the waterline is measured and everything below it is not: the channel bottom here is drawn from the 1977 contours in Figure 4 and is an approximation. The survey puts the water surface at 5,993 feet, which is independently within a foot of what the state&rsquo;s gauge recorded for that month.</figcaption>
+    </figure>
+  </section>
+
+  <section class="prose">
+    <h2>What this changes</h2>
+    <p>Jake&rsquo;s models have always needed a delay of several days between an upstream reading and the plant&rsquo;s own measurement, even though the water physically makes the trip in about four hours. That gap has been explained as mixing inside the reservoir, but nobody could watch it happen. Figure 1 is the first direct look: the muddy layer arrives at the surface within a day and works downward over the next three or four. The delay is the reservoir, not the river.</p>
+    <p>Figure 3 is the part that reframes the question. The instrument is watching the top fifth of the water column. The plant drinks from the bottom. Whether that matters depends on something none of us can answer from the data.</p>
+    <div class="openq">
+      <h3>Open questions for Denver Water</h3>
+      <ul>
+        <li>Where in the reservoir does the profiler hang, and what are the units on its depth column?</li>
+        <li>Was the 48-foot reach a deliberate choice to watch the surface layer, or a limit of the equipment?</li>
+        <li>In the four months this instrument has been running, the plant never saw a <span class="term" data-t="Excursion" data-d="A day when a measurement crosses the line that changes what operators do. Here it means total organic carbon above 3 milligrams per litre, or alkalinity below 60.">high-carbon day</span>. Every reading stayed between 1.2 and 2.7, well below the threshold of 3. Is there any way to test this instrument against the events it was bought for?</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sources">
+    <h2>Public sources</h2>
+    <p>Everything on this page that did not come from Denver Water&rsquo;s own materials came from these, all of them publicly available.</p>
+    <ol>
+      <li>
+        <span class="what"><b>Federal Energy Regulatory Commission, environmental assessment for the Strontia Springs Hydroelectric Project (P&#8209;6916&#8209;011), July 2020.</b> The intake elevation of 5,796 feet, its depth of 192 to 206 feet below the surface, the reservoir&rsquo;s operating range of 5,985 to 6,000 feet, the 6,002-foot normal maximum pool, and the confirmation that Denver Water has long taken water column profiles in this reservoir measuring these same properties.</span>
+        <a href="https://cms.ferc.gov/sites/default/files/2020-07/Strontia%20Springs%20Hydroelectric%20Project%20P-6916-011%20EA.pdf" target="_blank" rel="noopener">cms.ferc.gov &middot; P-6916-011 EA</a>
+      </li>
+      <li>
+        <span class="what"><b>Denver Water, request for proposals for deep sediment removal at Strontia Springs Reservoir, May 2022.</b> The 1.7-mile length, the 7,865 acre-foot capacity, the 98-acre surface, the dam&rsquo;s 292-foot structural height and 6,029-foot crest, and the description of where sediment has accumulated.</span>
+        <a href="https://www.denverwater.org/sites/default/files/2022-05/Strontia%20Springs%20Deep%20Sediment%20Removal%20RFP.pdf" target="_blank" rel="noopener">denverwater.org &middot; sediment removal RFP</a>
+      </li>
+      <li>
+        <span class="what"><b>US Geological Survey monitoring location 06707525, South Platte River above Strontia Springs Reservoir.</b> The river turbidity readings in the top panel of Figure 1, and the record showing this gage has measured temperature, conductivity, oxygen, pH and turbidity continuously since 31 March 2022.</span>
+        <a href="https://waterdata.usgs.gov/monitoring-location/USGS-06707525/" target="_blank" rel="noopener">waterdata.usgs.gov &middot; 06707525</a>
+      </li>
+      <li>
+        <span class="what"><b>Bureau of Land Management, draft environmental impact statement for the Foothills Project, 1977.</b> The site plan of the dam, at twenty-foot contours, which places the pre-dam river channel between the 5,780 and 5,800 foot contours and so settles how deep the reservoir actually is. Its labels also name the Foothills Tunnel as the link from the reservoir to the treatment plant.</span>
+        <a href="https://archive.org/download/proposedfoothill10unit/page/n52_w1600.jpg" target="_blank" rel="noopener">archive.org &middot; Foothills EIS figure 1-7</a>
+      </li>
+      <li>
+        <span class="what"><b>Photograph of the outlet works by mark byzewski, 10 June 2023.</b> Figure 5. Published on Wikimedia Commons under a Creative Commons Attribution 2.0 licence, which permits reuse with credit to the photographer.</span>
+        <a href="https://commons.wikimedia.org/wiki/File:2023-06-10_-_Waterton_Canyon_-_219.jpg" target="_blank" rel="noopener">commons.wikimedia.org &middot; Waterton Canyon 219</a>
+      </li>
+      <li>
+        <span class="what"><b>US Geological Survey 3D Elevation Program, one-metre laser survey of the Denver region.</b> The measured canyon profile in Figure 5, sampled through the agency&rsquo;s elevation point service; the underlying tile is free to download.</span>
+        <a href="https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CO_DRCOG_2020_B20/TIFF/USGS_1M_13_x48y436_CO_DRCOG_2020_B20.tif" target="_blank" rel="noopener">prd-tnm.s3.amazonaws.com &middot; 1 m elevation tile</a>
+      </li>
+      <li>
+        <span class="what"><b>US Geological Survey river camera network.</b> The photographs in Figure 2, and the confirmation that no camera exists at Strontia Springs itself. Images are retrieved from the public archive behind the agency&rsquo;s camera viewer.</span>
+        <a href="https://apps.usgs.gov/hivis/camera/CO_South_Platte_River_Blw_Brush_Crk_near_Trumbull_Upstream" target="_blank" rel="noopener">apps.usgs.gov &middot; Trumbull camera</a>
+      </li>
+      <li>
+        <span class="what"><b>US Geological Survey monitoring location 06701900, South Platte River below Brush Creek near Trumbull.</b> The flat discharge of 134 to 138 cubic feet per second through the August storm, which is the evidence that no runoff passed this point.</span>
+        <a href="https://waterdata.usgs.gov/monitoring-location/USGS-06701900/" target="_blank" rel="noopener">waterdata.usgs.gov &middot; 06701900</a>
+      </li>
+      <li>
+        <span class="what"><b>Colorado Division of Water Resources, telemetry station STRRESCO, Strontia Springs Reservoir.</b> The water surface elevation of 5,994 feet used in Figure 2, recorded every fifteen minutes.</span>
+        <a href="https://dwr.state.co.us/Tools/Stations/STRRESCO" target="_blank" rel="noopener">dwr.state.co.us &middot; STRRESCO</a>
+      </li>
+      <li>
+        <span class="what"><b>Water Quality Portal, Colorado Department of Public Health and Environment stations 5726A and 5726B, &ldquo;Strontia Springs Reservoir Site 1 Top&rdquo; and &ldquo;Site 1 Bottom&rdquo;.</b> The historic sampling position near the dam, which is the only published monitoring point inside the reservoir and the reason Figure 2 places the profiler where it does.</span>
+        <a href="https://www.waterqualitydata.us/provider/STORET/21COL001_WQX/21COL001_WQX-5726A/" target="_blank" rel="noopener">waterqualitydata.us &middot; Site 1 Top</a>
+      </li>
+      <li>
+        <span class="what"><b>Denver Water, reservoir operations.</b> Daily storage and percentage full for Strontia Springs, published for the most recent thirty days.</span>
+        <a href="https://www.denverwater.org/your-water/water-supply-and-planning/supply-data-and-reports/reservoir-levels" target="_blank" rel="noopener">denverwater.org &middot; reservoir levels</a>
+      </li>
+      <li>
+        <span class="what"><b>Denver Water, request for proposals for a Strontia Springs permanent bypass feasibility study, March 2025.</b> Denver Water&rsquo;s own description of the problem, that &ldquo;upstream and in-reservoir events frequently create water quality challenges&rdquo;, and the confirmation that both utilities&rsquo; intake towers sit near the dam.</span>
+        <a href="https://www.denverwater.org/sites/default/files/2025-03/Strontia%20Springs%20Bypass%20Feasibility%20Study%20RFP.pdf" target="_blank" rel="noopener">denverwater.org &middot; bypass study RFP</a>
+      </li>
+    </ol>
+  </section>
+
+  <p class="disclaimer"><strong>Denver Water provisional data.</strong> The measurements shown here were provided by Denver Water for the Explore DDD 2026 Design Storm and are provisional and subject to revision. River and reservoir readings drawn from public federal and state sources are likewise provisional. Nothing here is an official Denver Water finding, and the interpretation is the authors&rsquo;, not the utility&rsquo;s.</p>
+</div>
+
+<div id="tip" role="tooltip"></div>
+
+<script id="transect" type="application/json">[[-1250, 6325.5], [-1225, 6307.8], [-1200, 6294.5], [-1175, 6280.4], [-1150, 6262.4], [-1125, 6250.9], [-1100, 6233.5], [-1075, 6212.1], [-1050, 6193.5], [-1025, 6186.7], [-1000, 6160.3], [-975, 6147.9], [-950, 6151.6], [-925, 6158.2], [-900, 6150.8], [-875, 6147.9], [-850, 6143.9], [-825, 6133.6], [-800, 6120.3], [-775, 6101.4], [-750, 6092.8], [-725, 6105.0], [-700, 6092.9], [-675, 6078.7], [-650, 6051.9], [-625, 6041.7], [-600, 6021.4], [-575, 6005.0], [-550, 5993.4], [-525, 5993.4], [-500, 5993.4], [-475, 5993.4], [-450, 5993.4], [-425, 5993.4], [-400, 5993.4], [-375, 5993.4], [-350, 5993.4], [-325, 5993.4], [-300, 5993.4], [-275, 5993.4], [-250, 5993.4], [-225, 5993.4], [-200, 5993.4], [-175, 5993.4], [-150, 5993.4], [-125, 5993.4], [-100, 5993.4], [-75, 5993.4], [-50, 5993.4], [-25, 5993.4], [0, 5993.4], [25, 5993.4], [50, 5993.4], [75, 5993.4], [100, 5993.4], [125, 5993.4], [150, 5993.4], [175, 5993.4], [200, 5993.4], [225, 5993.4], [250, 5993.4], [275, 5993.4], [300, 5993.4], [325, 5993.4], [350, 5993.4], [375, 5993.4], [400, 5993.6], [425, 5994.1], [450, 5994.1], [475, 6015.6], [500, 6031.4], [525, 6033.0], [550, 6034.2], [575, 6041.1], [600, 6064.2], [625, 6076.2], [650, 6101.3], [675, 6150.0], [700, 6161.6], [725, 6158.2], [750, 6167.0], [775, 6204.0], [800, 6238.9], [825, 6261.5], [850, 6266.7], [875, 6265.6], [900, 6261.9], [925, 6258.1], [950, 6260.0], [975, 6250.2], [1000, 6241.7], [1025, 6239.4], [1050, 6236.5], [1075, 6240.8], [1100, 6244.7], [1125, 6237.6], [1150, 6238.4], [1175, 6240.1], [1200, 6241.0], [1225, 6243.6], [1250, 6244.6]]</script>
+<script id="data" type="application/json">{"dates": ["2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24", "2026-07-25", "2026-07-26", "2026-07-27", "2026-07-28", "2026-07-29", "2026-07-30", "2026-07-31", "2026-08-01", "2026-08-02", "2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-08", "2026-08-09", "2026-08-10", "2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-15", "2026-08-16", "2026-08-17", "2026-08-18", "2026-08-19"], "bins": [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0], "cells": [[0.94, 1.25, 1.4, 1.48, 1.63, 1.74, 1.78, 1.85, 1.91, 2.01, 2.01, 2.0, 1.95, 1.92, 1.87, 1.85, 1.71, 1.67, 1.53, 1.62, 1.69], [0.91, 1.1, 1.34, 1.51, 1.54, 1.66, 1.69, 1.67, 1.75, 1.88, 1.99, 1.96, 1.94, 1.92, 1.97, 2.01, 1.94, 1.88, 1.71, 1.66, 1.6], [0.91, 1.19, 1.44, 1.5, 2.44, 5.65, 6.83, 6.0, 2.98, 1.98, 1.91, 1.92, 1.84, 1.85, 1.88, 1.91, 1.9, 1.99, 1.9, 1.9, 1.81], [0.86, 1.12, 1.42, 2.56, 4.06, 5.9, 6.07, 5.71, 4.3, 4.48, 3.17, 2.58, 3.0, 2.19, 1.88, 1.9, 1.94, 1.93, 1.98, 1.98, 1.9], [0.83, 0.91, 1.25, 1.77, 3.14, 3.59, 3.33, 3.52, 3.41, 3.56, 3.43, 2.47, 2.24, 2.35, 2.13, 2.15, 2.03, 1.9, 1.9, 1.91, 1.9], [0.85, 1.33, 1.57, 2.01, 2.55, 2.84, 2.8, 2.88, 2.75, 2.67, 2.94, 2.96, 3.02, 2.83, 2.47, 2.48, 2.59, 2.06, 2.04, 1.91, 1.86], [0.83, 1.01, 1.27, 1.56, 1.85, 2.21, 2.11, 2.11, 2.04, 2.44, 2.47, 2.79, 2.72, 2.62, 2.58, 2.79, 2.62, 2.26, 2.16, 2.02, 1.93], [0.82, 1.05, 1.23, 1.43, 1.62, 1.76, 1.77, 1.82, 1.78, 1.96, 2.27, 2.5, 2.58, 2.41, 2.63, 2.75, 2.48, 2.41, 2.34, 2.28, 2.08], [0.84, 0.97, 1.29, 2.56, 3.73, 4.42, 4.21, 3.82, 2.25, 1.94, 2.09, 2.33, 2.47, 2.5, 2.49, 2.46, 2.47, 2.37, 2.24, 2.26, 2.08], [0.87, 1.12, 2.34, 2.94, 3.35, 3.94, 4.63, 4.82, 4.79, 3.74, 3.62, 2.49, 2.41, 2.44, 2.33, 2.4, 2.47, 2.44, 2.46, 2.12, 2.16], [0.88, 1.29, 1.62, 1.9, 2.27, 2.69, 2.77, 3.42, 3.79, 5.05, 4.46, 3.05, 2.51, 2.29, 2.21, 2.38, 2.66, 3.49, 3.49, 3.4, 2.87], [0.89, 1.14, 1.37, 1.64, 1.86, 2.08, 2.08, 2.28, 2.58, 3.46, 4.21, 3.21, 2.6, 2.34, 2.42, 2.94, 3.65, 3.86, 3.75, 3.49, 2.98], [0.92, 0.95, 1.23, 1.4, 1.65, 1.75, 1.84, 1.94, 2.07, 2.55, 3.24, 3.78, 3.33, 2.51, 2.54, 2.35, 3.25, 3.54, 3.56, 3.45, 3.27], [0.91, 0.93, 0.98, 1.29, 1.48, 1.61, 1.7, 1.77, 1.92, 2.04, 2.33, 2.88, 3.27, 3.16, 2.78, 2.75, 2.75, 3.17, 3.29, 3.23, 3.14], [1.02, 1.15, 1.33, 1.42, 1.5, 1.5, 1.62, 1.71, 1.77, 1.88, 2.12, 2.42, 3.22, 2.98, 2.71, 2.65, 2.79, 3.08, 3.07, 2.99, 3.02], [1.02, 1.15, 1.35, 1.45, 1.49, 1.54, 1.68, 1.92, 2.2, 2.38, 2.67, 2.59, 2.83, 2.95, 2.81, 2.63, 2.69, 2.59, 2.51, 2.56, 2.63], [0.99, 1.02, 1.19, 1.37, 1.42, 1.6, 1.73, 1.96, 2.4, 2.57, 2.62, 2.63, 2.55, 2.58, 2.5, 2.32, 2.38, 2.23, 2.25, 2.29, 2.08], [0.99, 1.01, 1.25, 1.33, 1.46, 1.62, 1.79, 2.02, 2.26, 2.29, 2.32, 2.36, 2.26, 2.21, 2.17, 2.17, 2.1, 2.1, 2.09, 2.13, 2.17], [1.0, 1.04, 1.15, 1.46, 1.65, 1.77, 1.84, 2.0, 1.99, 2.06, 2.0, 2.01, 2.01, 1.98, 1.94, 2.0, 2.1, 2.02, 2.06, 2.05, 2.13], [1.05, 1.08, 1.41, 1.76, 1.83, 1.81, 1.83, 1.81, 1.92, 1.92, 1.89, 1.85, 1.94, 1.94, 1.95, 1.92, 2.0, 2.13, 2.0, 2.04, 2.17], [1.09, 1.13, 1.62, 1.69, 1.73, 1.79, 1.75, 1.75, 1.82, 1.79, 1.77, 1.86, 1.86, 1.88, 1.94, 2.0, 1.91, 1.94, 1.93, 1.95, 1.98], [1.12, 1.17, 1.3, 1.6, 1.66, 1.69, 1.69, 1.76, 1.72, 1.77, 1.81, 1.79, 1.87, 1.83, 1.83, 1.85, 1.9, 1.98, 1.94, 1.94, 1.98], [1.07, 1.09, 1.27, 1.4, 1.52, 1.6, 1.62, 1.69, 1.73, 1.67, 1.73, 1.76, 1.81, 1.8, 1.79, 1.73, 1.83, 1.84, 1.86, 1.88, 1.98], [1.04, 1.08, 1.13, 1.35, 1.4, 1.52, 1.63, 1.61, 1.65, 1.71, 1.73, 1.75, 1.7, 1.81, 1.75, 1.79, 1.77, 1.79, 1.83, 1.86, 1.9], [1.02, 1.06, 1.72, 2.95, 4.75, 1.73, 1.62, 1.62, 1.68, 1.66, 1.71, 1.72, 1.71, 1.74, 1.75, 1.71, 1.75, 1.86, 1.81, 1.83, 1.91], [1.19, 1.22, 1.98, 3.78, 18.4, 14.64, 7.2, 4.13, 2.33, 1.88, 1.85, 1.77, 1.68, 1.8, 1.74, 1.77, 1.81, 1.99, 1.87, 1.88, 1.93], [1.21, 1.34, 6.51, 9.02, 13.89, 19.29, 20.23, 18.16, 5.7, 2.72, 2.33, 2.28, 2.05, 1.94, 1.93, 1.88, 1.86, 1.98, 1.86, 1.96, 1.98], [1.59, 1.54, 1.76, 4.87, 8.59, 12.41, 15.42, 18.55, 15.84, 7.73, 3.27, 2.52, 2.42, 2.3, 2.01, 2.06, 2.01, 1.99, 2.05, 1.97, 1.96], [1.36, 1.1, 1.73, 2.85, 3.38, 4.48, 5.59, 6.57, 8.07, 9.9, 7.76, 3.95, 2.21, 1.95, 1.75, 1.8, 1.66, 1.71, 1.6, 1.67, 1.89], [1.36, 1.29, 1.31, 1.72, 2.43, 3.21, 3.55, 4.12, 5.15, 7.54, 7.8, 4.4, 2.29, 1.95, 1.81, 1.75, 1.54, 1.67, 1.65, 1.71, 2.0]], "river_med": [2.7, 2.8, 4.8, 2.8, 2.7, 2.5, 2.1, 4.8, 2.9, 3.1, 2.4, 2.2, 2.1, 2.0, 1.9, 2.0, 2.4, 2.3, 3.2, 2.8, 2.7, 2.4, 2.1, null, 6.4, 7.9, 3.5, 2.7, 2.3, 2.1], "river_max": [3.6, 121.0, 85.6, 27.1, 27.1, 3.2, 4.3, 151.0, 4.3, 4.9, 3.3, 2.9, 2.6, 2.6, 2.3, 2.8, 3.3, 3.3, 4.2, 3.4, 3.2, 3.7, 4.4, null, 237.0, 329.0, 5.5, 3.6, 3.2, 4.6], "toc": [2.0, 2.0, 2.0, 2.1, 2.1, 2.1, 2.0, 2.4, 1.9, 2.0, 2.0, 2.0, 1.8, 1.9, 2.0, 2.0, 1.9, 1.9, 1.9, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.5, 2.5, 2.3, 2.2], "vmax": 20.23, "vmin": 0.82}</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var tip = document.getElementById('tip');
+
+  function showTip(html, x, y) {
+    tip.innerHTML = html;
+    tip.classList.add('on');
+    var r = tip.getBoundingClientRect();
+    var left = x + 14;
+    var top = y + 16;
+    if (left + r.width > window.innerWidth - 12) left = x - r.width - 14;
+    if (top + r.height > window.innerHeight - 12) top = y - r.height - 16;
+    tip.style.left = Math.max(8, left) + 'px';
+    tip.style.top = Math.max(8, top) + 'px';
+  }
+  function hideTip() { tip.classList.remove('on'); }
+
+  document.querySelectorAll('.term').forEach(function (el) {
+    el.setAttribute('tabindex', '0');
+    function on(e) {
+      var pt = e.touches ? e.touches[0] : e;
+      var box = el.getBoundingClientRect();
+      showTip('<b>' + el.dataset.t + '</b>' + el.dataset.d,
+        pt.clientX || box.left, pt.clientY || box.bottom);
+    }
+    el.addEventListener('mouseenter', on);
+    el.addEventListener('mousemove', on);
+    el.addEventListener('mouseleave', hideTip);
+    el.addEventListener('focus', function () {
+      var box = el.getBoundingClientRect();
+      showTip('<b>' + el.dataset.t + '</b>' + el.dataset.d, box.left, box.bottom);
+    });
+    el.addEventListener('blur', hideTip);
+  });
+
+  // ---- Figure 1 -------------------------------------------------------
+  var NS = 'http://www.w3.org/2000/svg';
+  var g = document.getElementById('chart');
+  function mk(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    g.appendChild(e);
+    return e;
+  }
+
+  var L = 76, R = 946;                 // plot x range
+  var n = D.dates.length;
+  var cw = (R - L) / n;
+
+  var riverTop = 34, riverH = 96;      // panel 1
+  var heatTop = 176, rowH = 13;        // panel 2
+  var heatH = D.bins.length * rowH;
+  var tocTop = heatTop + heatH + 60, tocH = 52;   // panel 3
+
+  var ramp = ['#F3EFE7', '#E7D9BE', '#D8BE8D', '#C29E5E', '#A67C3C', '#825B25', '#5C3D15'];
+  function colorFor(v) {
+    if (v === null) return '#FFFFFF';
+    var t = (Math.log(v) - Math.log(0.8)) / (Math.log(20.5) - Math.log(0.8));
+    t = Math.max(0, Math.min(0.999, t));
+    return ramp[Math.floor(t * ramp.length)];
+  }
+
+  function dayLabel(iso) {
+    var p = iso.split('-');
+    var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1];
+    return m + ' ' + (+p[2]);
+  }
+
+  // --- panel 1: river turbidity, log scale
+  mk('text', { x: L, y: riverTop - 12, class: 'panel-title' },
+     'In the river, above the reservoir');
+  var ticks = [3, 10, 30, 100, 300];
+  function ry(v) {
+    var lo = Math.log(2), hi = Math.log(350);
+    return riverTop + riverH - ((Math.log(v) - lo) / (hi - lo)) * riverH;
+  }
+  ticks.forEach(function (t) {
+    mk('line', { x1: L, y1: ry(t), x2: R, y2: ry(t), class: 'gridline' });
+    mk('text', { x: L - 8, y: ry(t) + 3.5, class: 'ax', 'text-anchor': 'end' }, t);
+  });
+  mk('text', { x: L - 8, y: riverTop - 4, class: 'axlab', 'text-anchor': 'end' }, 'NTU');
+
+  var pts = [];
+  D.river_max.forEach(function (v, i) {
+    if (v === null) return;
+    pts.push((L + cw * i + cw / 2) + ',' + ry(v));
+  });
+  mk('polyline', { points: pts.join(' '), fill: 'none', stroke: '#14656E',
+                   'stroke-width': 2, 'stroke-linejoin': 'round' });
+  D.river_max.forEach(function (v, i) {
+    if (v === null) return;
+    var cx = L + cw * i + cw / 2;
+    var c = mk('circle', { cx: cx, cy: ry(v), r: v > 100 ? 5 : 3.2,
+                           fill: '#14656E', stroke: '#FFFFFF', 'stroke-width': 2 });
+    c.style.cursor = 'crosshair';
+    c.addEventListener('mouseenter', function (e) {
+      showTip('<b>' + dayLabel(D.dates[i]) + ' &middot; river gage</b>' +
+        'Worst moment of the day: <span class="val">' + v + ' NTU</span><br>' +
+        'Middle of the day: <span class="val">' + D.river_med[i] + ' NTU</span>',
+        e.clientX, e.clientY);
+    });
+    c.addEventListener('mouseleave', hideTip);
+  });
+
+  // --- panel 2: heatmap
+  mk('text', { x: L, y: heatTop - 14, class: 'panel-title' },
+     'Inside the reservoir, by depth');
+  mk('text', { x: L - 8, y: heatTop - 14, class: 'axlab', 'text-anchor': 'end' }, 'ft');
+
+  D.cells.forEach(function (row, di) {
+    row.forEach(function (v, bi) {
+      var x = L + cw * di, y = heatTop + rowH * bi;
+      var rect = mk('rect', { x: x, y: y, width: cw, height: rowH,
+                              fill: colorFor(v), class: 'cell' });
+      rect.addEventListener('mouseenter', function (e) {
+        showTip('<b>' + dayLabel(D.dates[di]) + ' &middot; ' + D.bins[bi] + ' ft down</b>' +
+          'Cloudiness: <span class="val">' + (v === null ? 'no reading' : v + ' NTU') + '</span>',
+          e.clientX, e.clientY);
+      });
+      rect.addEventListener('mouseleave', hideTip);
+    });
+  });
+  [1, 11, 21, 31, 41].forEach(function (b) {
+    var bi = D.bins.indexOf(b);
+    if (bi < 0) return;
+    mk('text', { x: L - 8, y: heatTop + rowH * bi + rowH / 2 + 3.5,
+                 class: 'ax', 'text-anchor': 'end' }, b);
+  });
+  mk('text', { x: L - 46, y: heatTop + heatH / 2, class: 'axlab',
+               'text-anchor': 'middle',
+               transform: 'rotate(-90 ' + (L - 46) + ' ' + (heatTop + heatH / 2) + ')' },
+     'Depth below surface');
+
+  // --- panel 3: plant TOC
+  mk('text', { x: L, y: tocTop - 12, class: 'panel-title' },
+     'Arriving at the treatment plant');
+  function ty(v) {
+    var lo = 1.8, hi = 2.6;
+    return tocTop + tocH - ((v - lo) / (hi - lo)) * tocH;
+  }
+  [1.8, 2.2, 2.6].forEach(function (t) {
+    mk('line', { x1: L, y1: ty(t), x2: R, y2: ty(t), class: 'gridline' });
+    mk('text', { x: L - 8, y: ty(t) + 3.5, class: 'ax', 'text-anchor': 'end' }, t.toFixed(1));
+  });
+  mk('text', { x: L - 8, y: tocTop - 4, class: 'axlab', 'text-anchor': 'end' }, 'mg/L');
+  var tpts = [];
+  D.toc.forEach(function (v, i) {
+    if (v === null) return;
+    tpts.push((L + cw * i + cw / 2) + ',' + ty(v));
+  });
+  mk('polyline', { points: tpts.join(' '), fill: 'none', stroke: '#825B25',
+                   'stroke-width': 2, 'stroke-linejoin': 'round' });
+  D.toc.forEach(function (v, i) {
+    if (v === null) return;
+    var c = mk('circle', { cx: L + cw * i + cw / 2, cy: ty(v), r: 3.2,
+                           fill: '#825B25', stroke: '#FFFFFF', 'stroke-width': 2 });
+    c.style.cursor = 'crosshair';
+    c.addEventListener('mouseenter', function (e) {
+      showTip('<b>' + dayLabel(D.dates[i]) + ' &middot; plant influent</b>' +
+        'Total organic carbon: <span class="val">' + v + ' mg/L</span><br>' +
+        'The line operators watch is 3.0',
+        e.clientX, e.clientY);
+    });
+    c.addEventListener('mouseleave', hideTip);
+  });
+
+  // --- shared date axis
+  D.dates.forEach(function (d, i) {
+    if (i % 3 !== 0) return;
+    var x = L + cw * i + cw / 2;
+    mk('text', { x: x, y: tocTop + tocH + 20, class: 'ax', 'text-anchor': 'middle' },
+       dayLabel(d));
+  });
+
+  // --- event marker across all three panels
+  var ei = D.dates.indexOf('2026-08-15');
+  if (ei >= 0) {
+    var ex = L + cw * ei + cw / 2;
+    mk('line', { x1: ex, y1: riverTop - 6, x2: ex, y2: tocTop + tocH + 4,
+                 stroke: '#A93A2C', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
+    mk('text', { x: ex + 6, y: riverTop - 10, class: 'axlab', fill: '#A93A2C' },
+       '15 Aug storm');
+  }
+})();
+</script>
+
+<script>
+(function () {
+  var T = JSON.parse(document.getElementById('transect').textContent);
+  var g = document.getElementById('canyon');
+  if (!g || !T || !T.length) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  var tip = document.getElementById('tip');
+  function mk(tag, attrs, text, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    (parent || g).appendChild(e);
+    return e;
+  }
+
+  var X0 = 70, X1 = 950, Y0 = 34, Y1 = 400;
+  var FT0 = -1250, FT1 = 1250, E0 = 5770, E1 = 6340;
+  function x(ft) { return X0 + (ft - FT0) / (FT1 - FT0) * (X1 - X0); }
+  function y(e) { return Y1 - (e - E0) / (E1 - E0) * (Y1 - Y0); }
+
+  var WS = 5993.4, BED = 5786, INTAKE = 5796, PROBE = 5946;
+
+  // waterline extent
+  var iL = -1, iR = -1;
+  for (var i = 0; i < T.length; i++) {
+    if (T[i][1] !== null && T[i][1] <= WS + 0.6) { if (iL < 0) iL = i; iR = i; }
+  }
+  var xL = x(T[iL][0]), xR = x(T[iR][0]);
+
+  // elevation grid
+  [5800, 5900, 6000, 6100, 6200, 6300].forEach(function (e) {
+    mk('line', { x1: X0, y1: y(e), x2: X1, y2: y(e), class: 'gridline' });
+    mk('text', { x: X0 - 8, y: y(e) + 3.5, class: 'ax', 'text-anchor': 'end' },
+       e.toLocaleString());
+  });
+  mk('text', { x: X0 - 8, y: Y0 - 8, class: 'axlab', 'text-anchor': 'end' }, 'ft');
+
+  // rock mass
+  var pts = T.filter(function (d) { return d[1] !== null; })
+              .map(function (d) { return x(d[0]) + ',' + y(d[1]); });
+  mk('path', { d: 'M' + X0 + ',' + Y1 + ' L' + pts.join(' L') + ' L' + X1 + ',' + Y1 + ' Z',
+               fill: '#CFC9BE' });
+
+  // water, with an inferred bed
+  var bed = [];
+  for (var t = 0; t <= 1.0001; t += 0.05) {
+    var e = WS - (WS - BED) * (1 - Math.pow(2 * t - 1, 2));
+    bed.push((xL + (xR - xL) * t) + ',' + y(e));
+  }
+  mk('path', { d: 'M' + xL + ',' + y(WS) + ' L' + xR + ',' + y(WS) + ' L' + bed.slice().reverse().join(' L') + ' Z',
+               fill: '#DCE6E7' });
+  mk('polyline', { points: bed.join(' '), fill: 'none', stroke: '#8D8779',
+                   'stroke-width': 1.5, 'stroke-dasharray': '5 4' });
+  mk('line', { x1: xL, y1: y(WS), x2: xR, y2: y(WS), stroke: '#4A7F85', 'stroke-width': 2 });
+
+  // terrain line on top
+  mk('polyline', { points: pts.join(' '), fill: 'none', stroke: '#8D8779', 'stroke-width': 2,
+                   'stroke-linejoin': 'round' });
+
+  // profiler
+  var px = xL + (xR - xL) * 0.42;
+  mk('line', { x1: px, y1: y(WS), x2: px, y2: y(PROBE), stroke: '#15171A', 'stroke-width': 2.5 });
+  mk('circle', { cx: px, cy: y(WS) - 2, r: 4.5, fill: '#15171A' });
+  mk('rect', { x: px - 5, y: y(PROBE) - 4, width: 10, height: 8, rx: 1, fill: '#15171A' });
+  mk('text', { x: px - 12, y: y(WS) + 14, class: 'xlab-strong', 'text-anchor': 'end' }, 'Profiler, 48 ft');
+
+  // intake
+  var ix = xL + (xR - xL) * 0.82;
+  mk('circle', { cx: ix, cy: y(INTAKE), r: 6, fill: '#A93A2C' });
+  mk('text', { x: ix + 12, y: y(INTAKE) - 2, class: 'xlab-strong', fill: '#A93A2C' }, 'Intake, 5,796 ft');
+  mk('text', { x: ix + 12, y: y(INTAKE) + 14, class: 'xlab', fill: '#A93A2C' }, '198 ft down');
+
+  // labels
+  mk('text', { x: xL - 8, y: y(WS) - 8, class: 'xlab', 'text-anchor': 'end' }, 'Water 5,993 ft');
+  mk('text', { x: (xL + xR) / 2, y: y(BED) + 18, class: 'xlab', 'text-anchor': 'middle', fill: '#7C838B' },
+     'channel bottom inferred, not measured');
+  mk('text', { x: X0, y: Y1 + 26, class: 'ax' }, 'West');
+  mk('text', { x: X1, y: Y1 + 26, class: 'ax', 'text-anchor': 'end' }, 'East');
+  [-1000, -500, 0, 500, 1000].forEach(function (ft) {
+    mk('text', { x: x(ft), y: Y1 + 26, class: 'ax', 'text-anchor': 'middle' },
+       (ft === 0 ? '0' : Math.abs(ft).toLocaleString()) + ' ft');
+  });
+
+  // hover
+  T.forEach(function (d) {
+    if (d[1] === null) return;
+    var hit = mk('rect', { x: x(d[0]) - 4, y: Y0, width: 8, height: Y1 - Y0,
+                           fill: 'transparent' });
+    hit.style.cursor = 'crosshair';
+    hit.addEventListener('mouseenter', function (e) {
+      tip.innerHTML = '<b>' + Math.abs(d[0]).toLocaleString() + ' ft ' +
+        (d[0] < 0 ? 'west' : d[0] > 0 ? 'east' : '') + ' of centre</b>' +
+        'Ground surface: <span class="val">' + d[1].toLocaleString() + ' ft</span>';
+      tip.classList.add('on');
+      tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 300) + 'px';
+      tip.style.top = (e.clientY + 16) + 'px';
+    });
+    hit.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
+  });
+})();
+</script>
+</body>
+</html>
