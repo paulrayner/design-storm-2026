@@ -326,7 +326,7 @@
         </span>
         <span class="cap">Muddier &middot; 0.8 to 20 <span class="term" data-t="NTU" data-d="Nephelometric Turbidity Unit, the standard measure of cloudiness. Clear tap water is under 1. Around 2 to 3 is normal for this river. Above about 20 the water looks visibly brown.">NTU</span></span>
       </div>
-      <figcaption>Each cell is the middle reading of that day at that depth, taken from four passes a day. The middle value is used rather than the average so a single bad reading cannot move the cell. The three deepest readings of every pass are excluded: the instrument stirs up sediment when it starts, producing spikes of up to 2,438 NTU that are an artefact of the measurement rather than the water. River turbidity is drawn on a folding scale because its peaks are a hundred times its baseline. Depth is in units as recorded in the file, which are almost certainly feet but are not labelled anywhere in it. The choice of daily statistic matters less than it might seem: on a typical day the highest and lowest of the four passes differ by under half a unit at every depth. It only bites during an event, and only in the upper column. Taking each day&rsquo;s highest pass instead of its middle one would roughly double the peak cell, from 20 to 43, while leaving the deepest rows almost untouched, since their worst single reading in the whole month is 4.7.</figcaption>
+      <figcaption>Each cell is the middle reading of that day at that depth, taken from four passes a day. The middle value is used rather than the average so a single bad reading cannot move the cell. The three deepest readings of every pass are excluded: the instrument stirs up sediment when it starts, producing spikes of up to 2,438 NTU that are an artefact of the measurement rather than the water. River turbidity is drawn on a folding scale because its peaks are a hundred times its baseline. Depth is in metres, per Denver Water; the file itself does not label the column. The choice of daily statistic matters less than it might seem: on a typical day the highest and lowest of the four passes differ by under half a unit at every depth. It only bites during an event, and only in the upper column. Taking each day&rsquo;s highest pass instead of its middle one would roughly double the peak cell, from 20 to 43, while leaving the deepest rows almost untouched, since their worst single reading in the whole month is 4.7.</figcaption>
     </figure>
 
     <div class="notes">
@@ -374,13 +374,13 @@
   <section>
     <div class="prose">
       <h2>What the instrument can and cannot see</h2>
-      <p class="lede">The reservoir is more than two hundred feet deep at the dam. The opening that sends water to the treatment plant sits within a few feet of the bottom. The new instrument reaches 48 feet down.</p>
+      <p class="lede">The reservoir is more than two hundred feet deep at the dam. The opening that sends water to the treatment plant sits within a few feet of the bottom. The new instrument reaches 48 metres, about 157 feet, down.</p>
     </div>
 
     <figure>
       <p class="fignum">Figure 3 &middot; Strontia Springs Reservoir in section</p>
       <div class="figscroll">
-        <svg viewBox="0 0 1120 520" role="img" aria-label="Cross-section of Strontia Springs Reservoir showing the dam, the water surface at 5,994 feet, the profiler reaching 48 feet down, and the intake at 5,796 feet, 150 feet below the profiler's deepest reading.">
+        <svg viewBox="0 0 1120 520" role="img" aria-label="Cross-section of Strontia Springs Reservoir showing the dam, the water surface at 5,994 feet, the profiler reaching 157 feet down, and the intake at 5,796 feet, about 41 feet below the profiler's deepest reading.">
           <defs>
             <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
               <path d="M0,0 L8,4 L0,8 Z" fill="#A93A2C"></path>
@@ -413,8 +413,8 @@
             <text x="815" y="58">6,029 ft &middot; dam crest</text>
             <line x1="801" y1="101" x2="809" y2="101" stroke="#BFBFB8"></line>
             <text x="815" y="105">5,994 ft &middot; water surface</text>
-            <line x1="801" y1="164" x2="809" y2="164" stroke="#BFBFB8"></line>
-            <text x="815" y="168">5,946 ft &middot; profiler stops</text>
+            <line x1="801" y1="306" x2="809" y2="306" stroke="#BFBFB8"></line>
+            <text x="815" y="310">5,837 ft &middot; profiler stops</text>
             <line x1="801" y1="360" x2="809" y2="360" stroke="#BFBFB8"></line>
             <text x="815" y="364">5,796 ft &middot; intake</text>
             <line x1="801" y1="373" x2="809" y2="373" stroke="#BFBFB8"></line>
@@ -424,17 +424,17 @@
           </g>
 
           <!-- profiler -->
-          <line x1="640" y1="101" x2="640" y2="164" stroke="#15171A" stroke-width="2"></line>
+          <line x1="640" y1="101" x2="640" y2="306" stroke="#15171A" stroke-width="2"></line>
           <circle cx="640" cy="99" r="5" fill="#15171A"></circle>
-          <rect x="634" y="158" width="12" height="9" rx="1" fill="#15171A"></rect>
+          <rect x="634" y="300" width="12" height="9" rx="1" fill="#15171A"></rect>
           <g class="xlab-strong"><text x="600" y="88" text-anchor="end">Profiler</text></g>
-          <g class="xlab"><text x="600" y="104" text-anchor="end">reaches 48 ft down</text></g>
+          <g class="xlab"><text x="600" y="104" text-anchor="end">reaches 157 ft (48 m) down</text></g>
           <line x1="606" y1="84" x2="634" y2="99" stroke="#15171A" stroke-width="1"></line>
 
           <!-- unobserved gap bracket -->
-          <path d="M672,164 L682,164 L682,360 L672,360" fill="none" stroke="#A93A2C" stroke-width="1.5"></path>
-          <g class="xlab-strong" fill="#A93A2C"><text x="690" y="252">150 ft</text></g>
-          <g class="xlab" fill="#A93A2C"><text x="690" y="268">never measured</text></g>
+          <path d="M672,306 L682,306 L682,360 L672,360" fill="none" stroke="#A93A2C" stroke-width="1.5"></path>
+          <g class="xlab-strong" fill="#A93A2C"><text x="690" y="330">41 ft</text></g>
+          <g class="xlab" fill="#A93A2C"><text x="690" y="346">never measured</text></g>
 
           <!-- intake -->
           <circle cx="700" cy="360" r="6" fill="#A93A2C"></circle>
@@ -458,7 +458,7 @@
           <g class="xnum"><text x="385" y="508" text-anchor="middle">1.7 miles, dam at right</text></g>
         </svg>
       </div>
-      <figcaption>Elevations come from Denver Water&rsquo;s 2020 federal hydropower licensing assessment and from the 1977 Foothills Project environmental impact statement, whose site plan of the dam shows the pre-dam river channel running between the 5,780 and 5,800 foot contours. The streambed is drawn at 5,786 feet, which is the 6,029-foot crest less the dam&rsquo;s stated height of 243 feet above the channel, putting the deepest water at roughly 216 feet at normal pool. Denver Water&rsquo;s 2022 sediment solicitation gives a maximum depth of about 258 feet; that figure measures down to the excavated foundation rather than the riverbed, so this drawing does not use it, and the 5,737-foot foundation is marked separately for reference. The water surface shown, 5,994 feet, is the daily average for August 2026 from Colorado&rsquo;s state water agency. The profiler&rsquo;s position in the reservoir is not published anywhere; it is drawn near the dam because that is where every historic monitoring station sits, but that placement is an assumption rather than a fact. Its depth span is drawn as feet; if the units turned out to be metres the instrument would reach 157 feet and still stop above the intake.</figcaption>
+      <figcaption>Elevations come from Denver Water&rsquo;s 2020 federal hydropower licensing assessment and from the 1977 Foothills Project environmental impact statement, whose site plan of the dam shows the pre-dam river channel running between the 5,780 and 5,800 foot contours. The streambed is drawn at 5,786 feet, which is the 6,029-foot crest less the dam&rsquo;s stated height of 243 feet above the channel, putting the deepest water at roughly 216 feet at normal pool. Denver Water&rsquo;s 2022 sediment solicitation gives a maximum depth of about 258 feet; that figure measures down to the excavated foundation rather than the riverbed, so this drawing does not use it, and the 5,737-foot foundation is marked separately for reference. The water surface shown, 5,994 feet, is the daily average for August 2026 from Colorado&rsquo;s state water agency. The profiler&rsquo;s position in the reservoir is not published anywhere; it is drawn near the dam because that is where every historic monitoring station sits, but that placement is an assumption rather than a fact. Its depth column is in metres, so its 48-metre reach is 157 feet and it stops about 41 feet above the intake.</figcaption>
     </figure>
 
     <figure style="margin-top:28px">
@@ -488,7 +488,7 @@
     <figure style="margin-top:28px">
       <p class="fignum">Figure 6 &middot; The canyon at the dam, measured</p>
       <div class="figscroll">
-        <svg viewBox="0 0 980 470" role="img" aria-label="An east-west cross-section of Waterton Canyon at Strontia Springs Dam, built from one-metre laser elevation data. Rock walls rise more than three hundred feet above a flat water surface at 5,993 feet. Below the water, the profiler's 48-foot reach and the intake at 5,796 feet are marked against an inferred channel bottom.">
+        <svg viewBox="0 0 980 470" role="img" aria-label="An east-west cross-section of Waterton Canyon at Strontia Springs Dam, built from one-metre laser elevation data. Rock walls rise more than three hundred feet above a flat water surface at 5,993 feet. Below the water, the profiler's 157-foot reach and the intake at 5,796 feet are marked against an inferred channel bottom.">
           <g id="canyon"></g>
         </svg>
       </div>
@@ -499,12 +499,12 @@
   <section class="prose">
     <h2>What this changes</h2>
     <p>Jake&rsquo;s models have always needed a delay of several days between an upstream reading and the plant&rsquo;s own measurement, even though the water physically makes the trip in about four hours. That gap has been explained as mixing inside the reservoir, but nobody could watch it happen. Figure 1 is the first direct look: the muddy layer arrives at the surface within a day and works downward over the next three or four. The delay is the reservoir, not the river.</p>
-    <p>Figure 3 is the part that reframes the question. The instrument is watching the top fifth of the water column. The plant drinks from the bottom. Whether that matters depends on something none of us can answer from the data.</p>
+    <p>Figure 3 is the part that reframes the question. The instrument watches the top three quarters of the water column and stops about forty feet above the opening the plant drinks from. Whether the plume ever reaches that last stretch is something none of us can answer from the data.</p>
     <div class="openq">
       <h3>Open questions for Denver Water</h3>
       <ul>
-        <li>Where in the reservoir does the profiler hang, and what are the units on its depth column?</li>
-        <li>Was the 48-foot reach a deliberate choice to watch the surface layer, or a limit of the equipment?</li>
+        <li>Where in the reservoir does the profiler hang?</li>
+        <li>Was the 157-foot reach a deliberate choice to watch the surface layer, or a limit of the equipment?</li>
         <li>In the four months this instrument has been running, the plant never saw a <span class="term" data-t="Excursion" data-d="A day when a measurement crosses the line that changes what operators do. Here it means total organic carbon above 3 milligrams per litre, or alkalinity below 60.">high-carbon day</span>. Every reading stayed between 1.2 and 2.7, well below the threshold of 3. Is there any way to test this instrument against the events it was bought for?</li>
       </ul>
     </div>
@@ -681,7 +681,7 @@
   // --- panel 2: heatmap
   mk('text', { x: L, y: heatTop - 14, class: 'panel-title' },
      'Inside the reservoir, by depth');
-  mk('text', { x: L - 8, y: heatTop - 14, class: 'axlab', 'text-anchor': 'end' }, 'ft');
+  mk('text', { x: L - 8, y: heatTop - 14, class: 'axlab', 'text-anchor': 'end' }, 'm');
 
   D.cells.forEach(function (row, di) {
     row.forEach(function (v, bi) {
@@ -689,7 +689,7 @@
       var rect = mk('rect', { x: x, y: y, width: cw, height: rowH,
                               fill: colorFor(v), class: 'cell' });
       rect.addEventListener('mouseenter', function (e) {
-        showTip('<b>' + dayLabel(D.dates[di]) + ' &middot; ' + D.bins[bi] + ' ft down</b>' +
+        showTip('<b>' + dayLabel(D.dates[di]) + ' &middot; ' + D.bins[bi] + ' m down</b>' +
           'Cloudiness: <span class="val">' + (v === null ? 'no reading' : v + ' NTU') + '</span>',
           e.clientX, e.clientY);
       });
@@ -780,7 +780,7 @@
   function x(ft) { return X0 + (ft - FT0) / (FT1 - FT0) * (X1 - X0); }
   function y(e) { return Y1 - (e - E0) / (E1 - E0) * (Y1 - Y0); }
 
-  var WS = 5993.4, BED = 5786, INTAKE = 5796, PROBE = 5946;
+  var WS = 5993.4, BED = 5786, INTAKE = 5796, PROBE = 5837;
 
   // waterline extent
   var iL = -1, iR = -1;
@@ -824,7 +824,7 @@
   mk('line', { x1: px, y1: y(WS), x2: px, y2: y(PROBE), stroke: '#15171A', 'stroke-width': 2.5 });
   mk('circle', { cx: px, cy: y(WS) - 2, r: 4.5, fill: '#15171A' });
   mk('rect', { x: px - 5, y: y(PROBE) - 4, width: 10, height: 8, rx: 1, fill: '#15171A' });
-  mk('text', { x: px - 12, y: y(WS) + 14, class: 'xlab-strong', 'text-anchor': 'end' }, 'Profiler, 48 ft');
+  mk('text', { x: px - 12, y: y(WS) + 14, class: 'xlab-strong', 'text-anchor': 'end' }, 'Profiler, 157 ft (48 m)');
 
   // intake
   var ix = xL + (xR - xL) * 0.82;

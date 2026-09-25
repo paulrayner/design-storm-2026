@@ -10,14 +10,14 @@ openpyxl.
     python3 build_plume.py
 
 Method, kept identical to the "Strontia Plume Depth" write-up so the two agree:
-the sonde makes four casts a day, each starting at the bottom (about 44.5 units)
+the sonde makes four casts a day, each starting at the bottom (about 44.5 m)
 and rising to the surface. The three deepest readings of every cast are dropped
 because the instrument stirs up sediment when it starts (spikes to thousands of
 NTU that are an artefact of the measurement). Readings are binned by depth into
-2-unit bins labelled by their centre (1, 3, ... 41), and each day's cell is the
+2 m bins labelled by their centre (1, 3, ... 41), and each day's cell is the
 median of that day's readings in that bin, so a single bad reading cannot move
-a cell. Depth units are as recorded in the file (unlabelled there; almost
-certainly feet).
+a cell. The depth column is in metres (unlabelled in the file; confirmed by
+Denver Water).
 """
 
 import csv
@@ -131,8 +131,8 @@ def build():
                     "export, the USGS daily summary at gage 06707525, and the Foothills "
                     "influent record (all in ../data). Denver Water provisional data, "
                     "provided as is; terms in ../data/TERMS.md. Each cell is the median "
-                    "turbidity (NTU) of one day's readings in a 2-unit depth bin, with the "
-                    "three deepest readings of every cast dropped. Depth units as recorded.",
+                    "turbidity (NTU) of one day's readings in a 2 m depth bin, with the "
+                    "three deepest readings of every cast dropped. Depth in metres.",
         "dates": [day.isoformat() for day in day_range()],
         "bins": BIN_CENTRES,
         "cells": cells,

@@ -50,8 +50,8 @@ layer work its way down over four days, and on to the Foothills lab, where
 organic carbon stepped up two days after the gage spiked.
 [`design-storm-strontia-plume.html`](design-storm-strontia-plume.html) is the
 full write-up behind that sequence: the river, the reservoir by depth, and the
-plant on one chart; the reservoir in section (the sonde reaches 48 ft down, the
-intake sits at 198 ft); and the finding that the gage thirteen miles upstream
+plant on one chart; the reservoir in section (the sonde reaches 48 m down, the
+intake sits at 198 ft, about 40 ft below its last reading); and the finding that the gage thirteen miles upstream
 never rose, so the runoff entered from the reach no flow gage watches. It ends
 with three open questions for Denver Water.
 

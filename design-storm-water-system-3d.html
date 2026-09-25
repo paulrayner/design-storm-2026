@@ -1001,22 +1001,22 @@ function buildCaptions() {
     { from: turbPeak,
       text: `${formatFrameTime(STORM.frames[turbPeak])}: turbidity spikes to ${Math.round(STORM.turb[turbPeak].v)} FNU, from a baseline of 2. The sediment pulse is minutes from Strontia Springs Reservoir.` },
     { from: (STORM.reachFrom = Math.min(turbPeak + 12, STORM.stormFrames - 1)),
-      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, outlined in amber, which no flow gage watches (click it). The map now shows the day's rain total. Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
+      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, outlined in amber, which no flow gage watches (click it). The map now shows the day's rain total. Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} m down.` },
     ...STORM.epilogueDays.map((day, k) => ({ from: STORM.stormFrames + k, text: epilogueCaption(day) })),
   ];
 }
 
 const EPILOGUE_NOTES = {
-  "2026-08-16": (peak, toc) => `The reservoir, by depth: the cloud is now ${peak.depth} ft down at ${peak.ntu} NTU. And at the Foothills plant, organic carbon steps up to ${toc} from 2.0 the day before. Two days after the gage, the storm has arrived in the lab.`,
-  "2026-08-17": (peak, toc) => `The layer sinks to ${peak.depth} ft, ${peak.ntu} NTU. It works its way down rather than arriving at depth; the plant still reads ${toc}.`,
-  "2026-08-18": (peak, toc) => `${peak.depth} ft down and fading, ${peak.ntu} NTU. The intake that feeds the plant sits 198 ft below the surface, 150 ft deeper than this sonde can see.`,
-  "2026-08-19": (peak, toc) => `The record ends with the plume at ${peak.depth} ft and the plant back near ${toc}. The water took four hours; the signal took two days. The reservoir, not the river, is the clock.`,
+  "2026-08-16": (peak, toc) => `The reservoir, by depth: the cloud is now ${peak.depth} m (${Math.round(peak.depth * 3.28)} ft) down at ${peak.ntu} NTU. And at the Foothills plant, organic carbon steps up to ${toc} from 2.0 the day before. Two days after the gage, the storm has arrived in the lab.`,
+  "2026-08-17": (peak, toc) => `The layer sinks to ${peak.depth} m, ${peak.ntu} NTU. It works its way down rather than arriving at depth; the plant still reads ${toc}.`,
+  "2026-08-18": (peak, toc) => `${peak.depth} m (${Math.round(peak.depth * 3.28)} ft) down and fading, ${peak.ntu} NTU. The intake that feeds the plant sits 198 ft below the surface; this sonde reaches 157 ft, so the last 40 ft are never measured.`,
+  "2026-08-19": (peak, toc) => `The record ends with the plume at ${peak.depth} m and the plant back near ${toc}. The water took four hours; the signal took two days. The reservoir, not the river, is the clock.`,
 };
 
 function epilogueCaption(day) {
   const note = EPILOGUE_NOTES[day];
   const peak = plumePeak(day), toc = plumeToc(day);
-  return note ? note(peak, toc) : `${day}: sonde peak ${peak.ntu} NTU at ${peak.depth} ft; plant TOC ${toc}.`;
+  return note ? note(peak, toc) : `${day}: sonde peak ${peak.ntu} NTU at ${peak.depth} m; plant TOC ${toc}.`;
 }
 
 function formatFrameTime(date) {
@@ -1143,7 +1143,7 @@ function drawPlume(canvas, plume, dayIndex) {
   g.fillStyle = "rgba(184,192,200,0.95)"; g.font = "10px -apple-system, sans-serif"; g.textAlign = "left";
   for (const depth of [1, 21, 41]) {
     const b = plume.bins.indexOf(depth);
-    if (b >= 0) g.fillText(depth + " ft", w - pad.right + 4, pad.top + (b + 0.5) * rh + 3.5);
+    if (b >= 0) g.fillText(depth + " m", w - pad.right + 4, pad.top + (b + 0.5) * rh + 3.5);
   }
   g.textAlign = "center";
   plume.dates.forEach((day, d) => {
@@ -1197,7 +1197,7 @@ async function replayStart() {
   document.getElementById("replay-charts").innerHTML = `
     <div class="spark-label">Turbidity at the gage above Strontia, FNU</div>
     <canvas class="spark" id="replay-turb"></canvas>
-    <div class="spark-label">Inside the reservoir, by depth: turbidity from the Strontia sonde, Aug 8 to 19 (darker is muddier, surface at top)</div>
+    <div class="spark-label">Inside the reservoir, by depth: turbidity from the Strontia sonde, Aug 8 to 19, depth in metres (darker is muddier, surface at top)</div>
     <canvas class="spark plume" id="replay-plume"></canvas>
     <div class="spark-label">Organic carbon arriving at the Foothills plant (TOC), mg/L</div>
     <canvas class="spark" id="replay-toc"></canvas>
