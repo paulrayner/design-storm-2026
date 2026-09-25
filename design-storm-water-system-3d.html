@@ -164,6 +164,7 @@
       <button class="action quiet" id="replay-exit">Exit</button>
     </div>
     <div class="replay-caption" id="replay-caption"></div>
+    <div class="spark-label" id="replay-legend" style="display:none">Colour is now the 24-hour rain total, a radar estimate (MRMS): blue about a quarter inch, green an inch, yellow two, red three or more. Amber outline: the drainage no flow gage watches.</div>
     <div id="replay-charts"></div>
   </div>
   <div id="tourbar">
@@ -175,7 +176,7 @@
     Imagery &copy; Esri &amp; contributors &middot; Terrain: Mapzen/AWS &middot;
     Live data: USGS &amp; USDA NRCS &middot; Boundaries: USGS NLDI &middot;
     Pipelines &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> &middot;
-    Storm radar: NEXRAD archive via Iowa State Mesonet &middot;
+    Storm radar and rain totals: NEXRAD and MRMS archives via Iowa State Mesonet &middot;
     Foothills influent lab data and Strontia sonde profiles &copy; 2026 <a href="https://www.denverwater.org/about-us/how-we-operate/public-records" target="_blank" rel="noopener">Denver Water</a>,
     provisional, provided as is, no warranty of any kind.
     Built in the <a href="https://github.com/paulrayner/design-storm-2026" target="_blank" rel="noopener">Design Storm workspace</a>.
@@ -997,7 +998,7 @@ function buildCaptions() {
     { from: turbPeak,
       text: `${formatFrameTime(STORM.frames[turbPeak])}: turbidity spikes to ${Math.round(STORM.turb[turbPeak].v)} FNU, from a baseline of 2. The sediment pulse is minutes from Strontia Springs Reservoir.` },
     { from: (STORM.reachFrom = Math.min(turbPeak + 12, STORM.stormFrames - 1)),
-      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, now outlined in amber, which no flow gage watches (click it). Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
+      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, outlined in amber, which no flow gage watches (click it). The map now shows the day's rain total. Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
     ...STORM.epilogueDays.map((day, k) => ({ from: STORM.stormFrames + k, text: epilogueCaption(day) })),
   ];
 }
@@ -1020,20 +1021,38 @@ function formatFrameTime(date) {
     month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " MDT";
 }
 
+// MRMS 24-hour precipitation total ending at this UTC timestamp (00Z Aug 16 is 6 PM MDT Aug 15,
+// so the window covers the storm evening and the morning after). Radar-derived estimate, not a gauge.
+const RAIN_TOTAL_STAMP = "202608160000";
+
+function rainTotalUrl() {
+  return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms::p24h-${RAIN_TOTAL_STAMP}/{z}/{x}/{y}.png`;
+}
+
 function radarUrl(date) {
   const stamp = date.toISOString().slice(0, 16).replace(/[-T:]/g, "");
   return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ridge::USCOMP-N0Q-${stamp}/{z}/{x}/{y}.png`;
 }
 
+const RADAR_OPACITY = 0.7, RAIN_TOTAL_OPACITY = 0.42;
+
 function setRadarFrame(date) {
+  setRasterOverlay(radarUrl(date), RADAR_OPACITY);
+}
+
+function setRasterOverlay(url, opacity) {
   const source = map.getSource("radar");
-  if (source && source.setTiles) { source.setTiles([radarUrl(date)]); return; }
+  if (source && source.setTiles) {
+    source.setTiles([url]);
+    map.setPaintProperty("radar", "raster-opacity", opacity);
+    return;
+  }
   if (map.getLayer("radar")) map.removeLayer("radar");
   if (source) map.removeSource("radar");
-  map.addSource("radar", { type: "raster", tiles: [radarUrl(date)], tileSize: 256,
-    maxzoom: 10, attribution: "NEXRAD via Iowa State Mesonet" });
+  map.addSource("radar", { type: "raster", tiles: [url], tileSize: 256,
+    maxzoom: 10, attribution: "NEXRAD and MRMS via Iowa State Mesonet" });
   map.addLayer({ id: "radar", type: "raster", source: "radar",
-    paint: { "raster-opacity": 0.7, "raster-fade-duration": 0 } }, "basin-line");
+    paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } }, "basin-line");
 }
 
 const REPLAY_GAGES = ["gage-06701900", "gage-06707525", "dam-strontia", "plant-foothills"];
@@ -1067,8 +1086,10 @@ function replaySet(i) {
   document.getElementById("replay-slider").value = i;
   document.getElementById("replay-time").textContent = replayTimeLabel(i);
   document.getElementById("replay-caption").textContent = currentCaption(i);
-  isEpilogue(i) ? removeRadar() : setRadarFrame(STORM.frames[i]);
-  setReachVisible(i >= STORM.reachFrom && !isEpilogue(i));
+  const showTotal = i >= STORM.reachFrom && !isEpilogue(i);
+  isEpilogue(i) ? removeRadar() : showTotal ? setRasterOverlay(rainTotalUrl(), RAIN_TOTAL_OPACITY) : setRadarFrame(STORM.frames[i]);
+  setReachVisible(showTotal);
+  document.getElementById("replay-legend").style.display = showTotal ? "block" : "none";
   replayCamera(isEpilogue(i));
   drawSpark(document.getElementById("replay-turb"), STORM.turb, "#d95926", Math.min(i, STORM.stormFrames - 1));
   drawPlume(document.getElementById("replay-plume"), STORM.plume, plumeDayIndex(i));
