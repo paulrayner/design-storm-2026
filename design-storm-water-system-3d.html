@@ -275,7 +275,7 @@ async function fetchJson(url) {
 }
 
 async function loadEverything() {
-  const [system, basinSP, basinBlue, basinFraser, basinWF, riversMain, riversDown] =
+  const [system, basinSP, basinBlue, basinFraser, basinWF, riversMain, riversDown, reach] =
     await Promise.all([
       fetchJson("water-system-3d/system.json"),
       fetchJson("strontia-brief/basins/south-platte-above-strontia-06707525.json"),
@@ -284,6 +284,7 @@ async function loadEverything() {
       fetchJson("strontia-brief/basins/williams-fork-parshall-09037500.json"),
       fetchJson("strontia-brief/basins/mainstem-flowlines-06707525.json"),
       fetchJson("strontia-brief/basins/downstream-mainstem-06707525.json"),
+      fetchJson("strontia-brief/basins/unwatched-reach-06707525.json"),
     ]);
   state.points = system.points;
   state.lines = system.lines;
@@ -296,12 +297,18 @@ async function loadEverything() {
     features: riversMain.features.concat(riversDown.features) };
 
   map.addSource("basins", { type: "geojson", data: basins });
+  map.addSource("reach", { type: "geojson", data: reach });
+  state.reach = reach.features[0].properties;
   map.addSource("rivers", { type: "geojson", data: rivers });
   map.addSource("tunnels", { type: "geojson", data: lineFeatures(system.lines) });
   map.addSource("points", { type: "geojson", data: pointFeatures() });
 
   map.addLayer({ id: "basin-line", type: "line", source: "basins",
     paint: { "line-color": "rgba(255,255,255,0.55)", "line-width": 1.4, "line-dasharray": [1, 2] } });
+  map.addLayer({ id: "reach-fill", type: "fill", source: "reach",
+    paint: { "fill-color": "#ffd166", "fill-opacity": 0, "fill-opacity-transition": { duration: 600 } } });
+  map.addLayer({ id: "reach-line", type: "line", source: "reach",
+    paint: { "line-color": "#ffd166", "line-width": 2, "line-opacity": 0, "line-opacity-transition": { duration: 600 } } });
   map.addLayer({ id: "river-line", type: "line", source: "rivers",
     paint: { "line-color": "#6fc3ff", "line-width": 2, "line-opacity": 0.9 } });
   map.addLayer({ id: "tunnel-casing", type: "line", source: "tunnels",
@@ -345,6 +352,10 @@ function wireInteraction() {
     tip.style.display = "none";
   });
   map.on("click", "points", (e) => showDetail(state.byId[e.features[0].properties.id]));
+  map.on("click", "reach-fill", () => {
+    if (!state.reachVisible) return;
+    showDetail({ id: "reach", kind: "reach", name: state.reach.name, blurb: reachBlurb() });
+  });
   map.on("click", "tunnel-line", (e) => {
     const line = state.byId[e.features[0].properties.id];
     if (line) showDetail(line);
@@ -372,7 +383,22 @@ function buildLegend() {
 const KIND_INTRO = {
   reservoir: "Reservoir / dam", gage: "River gage",
   snotel: "Snow station (SNOTEL)", plant: "Treatment plant", tunnel: "Tunnel / conduit",
+  reach: "Drainage no flow gage watches",
 };
+
+function reachBlurb() {
+  return `${state.reach.note} About ${Math.round(state.reach.area_sq_mi).toLocaleString()} square miles of
+    canyon country between the Trumbull gage, the Grant gage, and Strontia Springs Dam. A storm that
+    parks over it, as the Aug 14 cells did, reaches the reservoir with no upstream warning at all. Denver
+    Water is looking at rain gauges in exactly this kind of gap.`;
+}
+
+function setReachVisible(visible) {
+  if (state.reachVisible === visible) return;
+  state.reachVisible = visible;
+  map.setPaintProperty("reach-fill", "fill-opacity", visible ? 0.18 : 0);
+  map.setPaintProperty("reach-line", "line-opacity", visible ? 0.9 : 0);
+}
 
 const GLOSSARY = {
   "FNU": "Formazin Nephelometric Units: how cloudy the water is, measured by bouncing light off suspended particles. A clear mountain stream reads 1-5; the August storm hit 329.",
@@ -437,6 +463,7 @@ function showDetail(item) {
   const detail = document.getElementById("detail");
   const kind = item.kind || "tunnel";
   const color = (KINDS[kind] || { color: "#ffd166" }).color;
+  if (kind === "reach") map.flyTo({ center: [-105.45, 39.42], zoom: 9.3, pitch: 50, bearing: -10, speed: 0.8 });
   detail.innerHTML = `
     <h2>${item.name}</h2>
     <div class="kind" style="color:${color}">${KIND_INTRO[kind] || kind}</div>
@@ -561,13 +588,110 @@ async function renderInfluent() {
       <canvas class="spark" id="influent-toc"></canvas>
       <div class="spark-label">Alkalinity of the arriving water, mg/L</div>
       <canvas class="spark" id="influent-alk"></canvas>
-      <div class="spark-label">Foothills influent record, Apr 2022 to Aug 2026, from the design storm dataset. Hover for dates; the spring-runoff rhythm is the pattern to notice.</div>`;
+      <div class="spark-label">Foothills influent record, Apr 2022 to Aug 2026, from the design storm dataset. Hover for dates; the spring-runoff rhythm is the pattern to notice.</div>
+      <div id="predictionbox"></div>`;
     annotateGlossary(box);
     drawSpark(document.getElementById("influent-toc"), influent.toc, "#199e70");
     drawSpark(document.getElementById("influent-alk"), influent.alk, "#3987e5");
+    renderPredictions();
   } catch (err) {
     box.innerHTML = `<div class="spark-label">Influent record unavailable (${err.message}).</div>`;
   }
+}
+
+const PREDICTION_STYLES = { catboost: { color: "#ffffff", dash: [4, 3], label: "CatBoost" },
+                            rf_grid: { color: "#ffd166", dash: [2, 2], label: "random forest" } };
+
+async function renderPredictions() {
+  const box = document.getElementById("predictionbox");
+  try {
+    const predictions = await fetchJson("water-system-3d/foothills-predictions.json");
+    const toc = predictions.targets.toc, alk = predictions.targets.alk;
+    box.innerHTML = `
+      <p style="margin-top:14px">And here is what a soft sensor gets right, and wrong. Solid: what the lab
+      measured. Dashed: what two models (Jake's feature set, refit here) predicted for that day
+      from the upstream probes, snowpack, and rain. Each year is predicted by a model that saw
+      only the years before it, so 2023 was forecast from 2022 alone. The thin line is the
+      threshold operators watch.</p>
+      <div class="spark-label">TOC, predicted against measured, mg/L (threshold ${toc.threshold})</div>
+      <canvas class="spark tall" id="predict-toc"></canvas>
+      <div class="spark-label">Alkalinity, predicted against measured, mg/L (threshold ${alk.threshold})</div>
+      <canvas class="spark tall" id="predict-alk"></canvas>
+      <div class="spark-label">White dashes: CatBoost. Amber dashes: random forest. Hover for the numbers. The years the models miss (2023's flush, 2026's low alkalinity) are the design storm's open question.</div>`;
+    annotateGlossary(box);
+    drawCompare(document.getElementById("predict-toc"), toc, "#199e70");
+    drawCompare(document.getElementById("predict-alk"), alk, "#3987e5");
+  } catch (err) {
+    box.innerHTML = `<div class="spark-label">Model predictions unavailable (${err.message}).</div>`;
+  }
+}
+
+function drawCompare(canvas, target, color) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 16, bottom: 15, left: 2, right: 44 };
+  const actual = target.actual;
+  const byDate = {};
+  for (const [model, series] of Object.entries(target.models))
+    for (const d of series) (byDate[d.t] = byDate[d.t] || {})[model] = d.v;
+  const all = actual.map((d) => d.v).concat(...Object.values(target.models).map((s) => s.map((d) => d.v)), [target.threshold]);
+  const min = Math.min(...all), max = Math.max(...all), span = max - min || 1;
+  const last = actual.length - 1;
+  const x = (i) => pad.left + (i / (last || 1)) * (w - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - min) / span) * (h - pad.top - pad.bottom);
+  const gapDays = (a, b) => (parseDate(b) - parseDate(a)) / 86400000;
+
+  function trace(values, style) {
+    g.strokeStyle = style.color; g.lineWidth = style.width; g.setLineDash(style.dash || []);
+    g.beginPath();
+    let pen = false;
+    actual.forEach((d, i) => {
+      const v = values(d, i);
+      if (v === undefined || v === null || (i > 0 && gapDays(actual[i - 1].t, d.t) > 3)) pen = false;
+      if (v === undefined || v === null) return;
+      pen ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v));
+      pen = true;
+    });
+    g.stroke(); g.setLineDash([]);
+  }
+
+  function render(highlight) {
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1; g.setLineDash([1, 3]);
+    g.beginPath(); g.moveTo(pad.left, y(target.threshold)); g.lineTo(w - pad.right, y(target.threshold)); g.stroke();
+    g.setLineDash([]);
+    for (const [model, style] of Object.entries(PREDICTION_STYLES))
+      if (target.models[model]) trace((d) => (byDate[d.t] || {})[model], { ...style, width: 1.3 });
+    trace((d) => d.v, { color, width: 2 });
+    g.fillStyle = "rgba(184,192,200,0.95)"; g.font = "10px -apple-system, sans-serif";
+    g.textAlign = "left";
+    g.fillText(formatValue(max), w - pad.right + 4, y(max) + 4);
+    g.fillText(formatValue(min), w - pad.right + 4, y(min) + 4);
+    g.fillText(String(target.threshold), w - pad.right + 4, y(target.threshold) + 4);
+    g.textAlign = "center";
+    for (const tick of axisTicks(actual)) g.fillText(tick.text, x(tick.i), h - 3);
+    if (highlight < 0) return;
+    const d = actual[highlight], preds = byDate[d.t] || {};
+    g.strokeStyle = "rgba(255,255,255,0.45)";
+    g.beginPath(); g.moveTo(x(highlight), pad.top); g.lineTo(x(highlight), h - pad.bottom); g.stroke();
+    g.fillStyle = "#f2f4f6";
+    g.textAlign = highlight > last / 2 ? "right" : "left";
+    const parts = [`${formatDate(d.t)} ${parseDate(d.t).getFullYear()} · measured ${formatValue(d.v)}`]
+      .concat(Object.entries(PREDICTION_STYLES).filter(([m]) => preds[m] !== undefined)
+        .map(([m, st]) => `${st.label} ${formatValue(preds[m])}`));
+    g.fillText(parts.join(" · "), x(highlight) + (highlight > last / 2 ? -6 : 6), 10);
+  }
+
+  render(-1);
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (e.clientX - rect.left - pad.left) / (w - pad.left - pad.right);
+    render(Math.max(0, Math.min(last, Math.round(fraction * last))));
+  };
+  canvas.onmouseleave = () => render(-1);
 }
 
 async function fetchDwrStorage(chart) {
@@ -779,14 +903,14 @@ function tourGo(i) {
 function tourExit() {
   state.tourStep = -1;
   document.getElementById("tourbar").style.display = "none";
-  document.getElementById("tour-start").style.display = "block";
+  showActionButtons(true);
   showIntro();
   map.flyTo({ ...HOME, speed: 0.75 });
 }
 
 document.getElementById("tour-start").onclick = () => {
   document.querySelector("details.howto").open = false;
-  document.getElementById("tour-start").style.display = "none";
+  showActionButtons(false);
   document.getElementById("tourbar").style.display = "flex";
   tourGo(0);
 };
@@ -872,8 +996,8 @@ function buildCaptions() {
       text: "Evening: monsoon cells train over the upper basin. Watch the radar paint the canyons above Strontia Springs." },
     { from: turbPeak,
       text: `${formatFrameTime(STORM.frames[turbPeak])}: turbidity spikes to ${Math.round(STORM.turb[turbPeak].v)} FNU, from a baseline of 2. The sediment pulse is minutes from Strontia Springs Reservoir.` },
-    { from: Math.min(turbPeak + 12, STORM.stormFrames - 1),
-      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, which no flow gage watches. Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
+    { from: (STORM.reachFrom = Math.min(turbPeak + 12, STORM.stormFrames - 1)),
+      text: `The pulse decays through Aug 15. Thirteen miles upstream at Trumbull the river never rose (${Math.round(flowMin)} to ${Math.round(flowMax)} cubic ft/s all storm): the mud came in from the reach below that gage, now outlined in amber, which no flow gage watches (click it). Inside the reservoir, the sonde already reads ${plumePeak("2026-08-15").ntu} NTU ${plumePeak("2026-08-15").depth} ft down.` },
     ...STORM.epilogueDays.map((day, k) => ({ from: STORM.stormFrames + k, text: epilogueCaption(day) })),
   ];
 }
@@ -944,6 +1068,7 @@ function replaySet(i) {
   document.getElementById("replay-time").textContent = replayTimeLabel(i);
   document.getElementById("replay-caption").textContent = currentCaption(i);
   isEpilogue(i) ? removeRadar() : setRadarFrame(STORM.frames[i]);
+  setReachVisible(i >= STORM.reachFrom && !isEpilogue(i));
   replayCamera(isEpilogue(i));
   drawSpark(document.getElementById("replay-turb"), STORM.turb, "#d95926", Math.min(i, STORM.stormFrames - 1));
   drawPlume(document.getElementById("replay-plume"), STORM.plume, plumeDayIndex(i));
@@ -1026,10 +1151,15 @@ function replayPlay() {
   document.getElementById("replay-play").textContent = "Pause";
 }
 
+const ACTION_BUTTONS = ["tour-start", "replay-start", "wy-start"];
+
+function showActionButtons(visible) {
+  for (const id of ACTION_BUTTONS) document.getElementById(id).style.display = visible ? "block" : "none";
+}
+
 async function replayStart() {
   document.querySelector("details.howto").open = false;
-  document.getElementById("tour-start").style.display = "none";
-  document.getElementById("replay-start").style.display = "none";
+  showActionButtons(false);
   document.getElementById("detail").innerHTML = "";
   document.getElementById("replaybar").style.display = "block";
   document.getElementById("replay-caption").textContent = "Loading the storm record…";
@@ -1059,10 +1189,10 @@ function replayExit() {
   replayPause();
   removeReplayLabels();
   removeRadar();
+  setReachVisible(false);
   STORM.inReservoir = false;
   document.getElementById("replaybar").style.display = "none";
-  document.getElementById("tour-start").style.display = "block";
-  document.getElementById("replay-start").style.display = "block";
+  showActionButtons(true);
   showIntro();
   map.flyTo({ ...HOME, speed: 0.75 });
 }
@@ -1229,7 +1359,7 @@ function wyYearOptions() {
 
 async function wyStart() {
   document.querySelector("details.howto").open = false;
-  for (const id of ["tour-start", "replay-start", "wy-start"]) document.getElementById(id).style.display = "none";
+  showActionButtons(false);
   document.getElementById("yearbar").style.display = "block";
   document.getElementById("detail").innerHTML = `
     <p>Every winter since the pillows went in, replayed on the map. White diamonds
@@ -1258,7 +1388,7 @@ function wyExit() {
   state.wyScale = null; state.wyLabel = null;
   map.getSource("points").setData(pointFeatures());
   document.getElementById("yearbar").style.display = "none";
-  for (const id of ["tour-start", "replay-start", "wy-start"]) document.getElementById(id).style.display = "block";
+  showActionButtons(true);
   showIntro();
 }
 
