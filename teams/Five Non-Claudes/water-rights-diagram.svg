@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" role="img" aria-label="Diagram showing Denver's Blue River and Fraser River diversions as a one-way move between two unsynced clusters. The Blue River move can be preempted by Green Mountain Reservoir's higher-priority lock. The Fraser River move is bound by an SLA of minimum flow and maximum temperature, checked by a live monitoring loop. A separate reservoir, Williams Fork, issues a compensating write back to the shared river to keep the West cluster's balance whole.">
+  <defs>
+    <marker id="arrowE" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d6b52" />
+    </marker>
+    <marker id="arrowW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a8562f" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="540" fill="#f7f3ec" />
+
+  <g font-family="Georgia, 'Iowan Old Style', serif" fill="#2b2420">
+    <polyline points="300,20 330,90 290,150 340,220 300,300 340,380 300,460 330,520"
+      fill="none" stroke="#2b2420" stroke-width="1.5" stroke-dasharray="2 5" opacity="0.5" />
+    <text x="314" y="16" font-size="10.5" letter-spacing="1" text-anchor="middle" fill="#7d7264">CLUSTER BOUNDARY</text>
+
+    <text x="140" y="42" font-size="10.5" letter-spacing="1" text-anchor="middle" fill="#7d7264">WEST CLUSTER</text>
+    <text x="530" y="42" font-size="10.5" letter-spacing="1" text-anchor="middle" fill="#7d7264">EAST CLUSTER (DENVER)</text>
+
+    <!-- Blue River / Dillon -->
+    <circle cx="110" cy="100" r="7" fill="none" stroke="#a8562f" stroke-width="2" />
+    <text x="110" y="80" text-anchor="middle" font-size="12.5">Dillon Reservoir</text>
+    <text x="110" y="93" text-anchor="middle" font-size="11" fill="#7d7264">Blue River resource</text>
+
+    <!-- Green Mountain Reservoir, downstream on Blue River -->
+    <circle cx="110" cy="235" r="7" fill="none" stroke="#a8562f" stroke-width="2" />
+    <text x="110" y="255" text-anchor="middle" font-size="12.5">Green Mountain Res.</text>
+    <text x="110" y="268" text-anchor="middle" font-size="11" fill="#7d7264">holds the older lock</text>
+
+    <!-- Denver system, east of Roberts Tunnel -->
+    <circle cx="540" cy="100" r="7" fill="none" stroke="#3d6b52" stroke-width="2" />
+    <text x="540" y="80" text-anchor="middle" font-size="12.5">Denver system</text>
+    <text x="540" y="93" text-anchor="middle" font-size="11" fill="#7d7264">via Roberts Tunnel</text>
+
+    <!-- Forward diversion: Dillon -> Denver -->
+    <path d="M118,100 L 528,100" fill="none" stroke="#a8562f" stroke-width="2" marker-end="url(#arrowE)" />
+    <text x="324" y="93" text-anchor="middle" font-size="11" fill="#a8562f">move()</text>
+
+    <!-- Priority call, dashed, Green Mountain -> Dillon -->
+    <path d="M118,228 C 60,190 60,140 100,110" fill="none" stroke="#a8562f" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowW)" />
+    <text x="40" y="170" font-size="11" fill="#a8562f">preempts</text>
+    <text x="40" y="183" font-size="11" fill="#7d7264">under load, can pause</text>
+    <text x="40" y="196" font-size="11" fill="#7d7264">or throttle the move()</text>
+
+    <!-- Fraser River -->
+    <circle cx="150" cy="360" r="7" fill="none" stroke="#a8562f" stroke-width="2" />
+    <text x="150" y="340" text-anchor="middle" font-size="12.5">Fraser River</text>
+
+    <!-- Gross Reservoir, east of Moffat Tunnel -->
+    <circle cx="540" cy="360" r="7" fill="none" stroke="#3d6b52" stroke-width="2" />
+    <text x="540" y="340" text-anchor="middle" font-size="12.5">Gross Reservoir</text>
+    <text x="540" y="353" text-anchor="middle" font-size="11" fill="#7d7264">via Moffat Tunnel</text>
+
+    <!-- Forward diversion: Fraser -> Gross -->
+    <path d="M158,362 L 528,362" fill="none" stroke="#a8562f" stroke-width="2" marker-end="url(#arrowE)" />
+    <text x="343" y="355" text-anchor="middle" font-size="11" fill="#a8562f">move()</text>
+
+    <!-- Return commitments, dashed, Gross -> Fraser -->
+    <path d="M528,378 C 400,410 250,410 162,378" fill="none" stroke="#3d6b52" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowW)" />
+    <text x="345" y="424" text-anchor="middle" font-size="11" fill="#3d6b52">SLA: min flow rate, max temperature</text>
+    <text x="345" y="437" text-anchor="middle" font-size="11" fill="#7d7264">enforced by a live monitoring feedback loop</text>
+
+    <!-- Williams Fork -->
+    <circle cx="90" cy="470" r="7" fill="none" stroke="#a8562f" stroke-width="2" />
+    <text x="90" y="490" text-anchor="middle" font-size="12.5">Williams Fork Res.</text>
+
+    <path d="M97,470 L 200,485" fill="none" stroke="#a8562f" stroke-width="2" marker-end="url(#arrowW)" />
+    <text x="230" y="480" font-size="11" fill="#a8562f">compensating write</text>
+    <text x="230" y="493" font-size="11" fill="#7d7264">zeroes out both move()s</text>
+    <text x="90" y="503" text-anchor="middle" font-size="11" fill="#7d7264">→ shared river balance</text>
+
+    <!-- Legend -->
+    <line x1="440" y1="480" x2="470" y2="480" stroke="#a8562f" stroke-width="2" marker-end="url(#arrowE)" />
+    <text x="478" y="484" font-size="11">one-way transfer</text>
+    <line x1="440" y1="502" x2="470" y2="502" stroke="#3d6b52" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowW)" />
+    <text x="478" y="506" font-size="11">runtime constraint</text>
+  </g>
+</svg>
