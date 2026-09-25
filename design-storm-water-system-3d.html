@@ -72,6 +72,18 @@
     background: rgba(57, 135, 229, 0.16); border-left: 3px solid #3987e5;
     border-radius: 4px; min-height: 34px;
   }
+  #yearbar { display: none; margin-top: 10px; }
+  #yearbar .row { display: flex; gap: 8px; align-items: center; }
+  #yearbar .row button { flex: 1; margin-top: 0; }
+  #yearbar select {
+    font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px;
+    border: 1px solid var(--panel-line); background: rgba(255,255,255,0.08); color: var(--panel-ink);
+  }
+  #yearbar .time { font-size: 13px; font-weight: 600; margin: 8px 0 4px; }
+  #yearbar input[type=range] { width: 100%; margin: 2px 0 6px; }
+  #wy-meltout { font-size: 11.5px; line-height: 1.5; margin-top: 8px; display: grid; grid-template-columns: auto 1fr; gap: 0 10px; }
+  #wy-meltout .early { color: #ffd166; }
+  #wy-meltout .late { color: #6fc3ff; }
   #attribution { font-size: 10px; color: var(--panel-ink-2); margin-top: 12px; line-height: 1.5; }
   #attribution a { color: var(--panel-ink-2); }
   #panel a { color: #6fc3ff; }
@@ -132,6 +144,18 @@
   <div id="detail"></div>
   <button class="action" id="tour-start">&#9992; Fly the water&rsquo;s path</button>
   <button class="action quiet" id="replay-start">&#9928; Replay the Aug 14-15 storm</button>
+  <button class="action quiet" id="wy-start">&#10052; Scrub a water year</button>
+  <div id="yearbar">
+    <div class="row">
+      <select id="wy-year"></select>
+      <button class="action" id="wy-play">Play</button>
+      <button class="action quiet" id="wy-exit">Exit</button>
+    </div>
+    <div class="time" id="wy-time"></div>
+    <input type="range" id="wy-day" min="0" max="365" value="0">
+    <div class="replay-caption" id="wy-caption"></div>
+    <div id="wy-meltout"></div>
+  </div>
   <div id="replaybar">
     <div class="time" id="replay-time"></div>
     <input type="range" id="replay-slider" min="0" max="0" value="0">
@@ -226,7 +250,9 @@ function pointFeatures() {
       .map((p) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [p.lon, p.lat] },
-        properties: { id: p.id, name: p.name, kind: p.kind },
+        properties: { id: p.id, name: p.name, kind: p.kind,
+                      scale: (state.wyScale && state.wyScale[p.id]) || 1,
+                      wyLabel: (state.wyLabel && state.wyLabel[p.id]) || "" },
       })),
   };
 }
@@ -289,7 +315,9 @@ async function loadEverything() {
   map.addLayer({ id: "points", type: "symbol", source: "points",
     layout: {
       "icon-image": ["concat", "marker-", ["get", "kind"]],
-      "icon-size": ["interpolate", ["linear"], ["zoom"], 7, 0.85, 11, 1.25],
+      "icon-size": ["interpolate", ["linear"], ["zoom"],
+        7, ["*", 0.85, ["coalesce", ["get", "scale"], 1]],
+        11, ["*", 1.25, ["coalesce", ["get", "scale"], 1]]],
       "icon-allow-overlap": true,
       "text-field": ["step", ["zoom"], "", 9.2, ["get", "name"]],
       "text-font": ["Noto Sans Regular"],
@@ -1043,6 +1071,221 @@ document.getElementById("replay-start").onclick = replayStart;
 document.getElementById("replay-exit").onclick = replayExit;
 document.getElementById("replay-play").onclick = () => replayPlaying() ? replayPause() : replayPlay();
 document.getElementById("replay-slider").oninput = (e) => replaySet(parseInt(e.target.value, 10));
+
+const WY = { year: 2026, day: 0, timer: null, snow: null, storage: null, msPerDay: 70 };
+const WY_FIRST_YEAR = 1981;
+const SNOW_MARKER_MIN = 0.3, SNOW_MARKER_RANGE = 1.4, RESERVOIR_MARKER_MIN = 0.55, RESERVOIR_MARKER_RANGE = 0.75;
+const MELT_OUT_INCHES = 0.1;
+// The NRCS feed occasionally reports a flat block of snow between bare-ground readings
+// (Michigan Creek, May 12 to 15, 2026: 9.0 inches, then zero again). A real late storm
+// on a bare pillow melts off gradually; a plateau that starts and stops at zero is the feed.
+const ARTIFACT_MIN_INCHES = 3, ARTIFACT_MAX_DAYS = 5;
+
+function artifactDays(trace) {
+  const flagged = new Set();
+  let start = -1;
+  trace.forEach((v, i) => {
+    const high = v !== null && v >= ARTIFACT_MIN_INCHES;
+    if (high && start < 0) start = i;
+    if (!high && start >= 0) {
+      const bounded = trace[start - 1] === 0 && v === 0 && i - start <= ARTIFACT_MAX_DAYS;
+      if (bounded) for (let k = start; k < i; k++) flagged.add(k);
+      start = -1;
+    }
+  });
+  return flagged;
+}
+
+function cleanedTrace(history, year) {
+  const trace = history.years[String(year)];
+  if (!trace) return null;
+  history.cleaned = history.cleaned || {};
+  if (!history.cleaned[year]) {
+    const flagged = artifactDays(trace);
+    history.cleaned[year] = { values: trace.map((v, i) => (flagged.has(i) ? 0 : v)), flagged };
+  }
+  return history.cleaned[year];
+}
+
+function waterYearDate(year, day) {
+  return new Date(Date.UTC(year - 1, 9, 1) + day * 86400000);
+}
+
+function formatWaterYearDate(year, day) {
+  return waterYearDate(year, day).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
+}
+
+function traceMax(values) {
+  return Math.max(...values.filter((v) => v !== null && isFinite(v)));
+}
+
+function meltOutIndex(values) {
+  const peak = values.reduce((best, v, i) => (v !== null && (values[best] === null || v > values[best]) ? i : best), 0);
+  for (let i = peak; i < values.length; i++) if (values[i] !== null && values[i] <= MELT_OUT_INCHES) return i;
+  return -1;
+}
+
+function snowEncoding(history, year, day) {
+  const cleaned = cleanedTrace(history, year);
+  const swe = cleaned ? cleaned.values[day] : null;
+  if (swe === null || swe === undefined) return null;
+  const medianPeak = traceMax(history.median) || 1;
+  const label = cleaned.flagged.has(day) ? "feed glitch, read as 0" : swe.toFixed(1) + " in";
+  return { value: swe, scale: SNOW_MARKER_MIN + SNOW_MARKER_RANGE * Math.min(1.3, swe / medianPeak),
+           label, median: history.median[day] };
+}
+
+function reservoirEncoding(history, capacity, year, day) {
+  const trace = history.years[String(year)];
+  const af = trace ? trace[day] : null;
+  if (af === null || af === undefined) return null;
+  const full = capacity ? af / capacity : af / (traceMax(history.median) || 1);
+  return { value: af, scale: RESERVOIR_MARKER_MIN + RESERVOIR_MARKER_RANGE * Math.min(1.2, full),
+           label: Math.round(100 * full) + (full > 1 ? "% of capacity" : "% full"), median: history.median[day] };
+}
+
+function pointEncoding(point, year, day) {
+  if (point.kind === "snotel" && point.chart) return snowEncoding(WY.snow.stations[point.chart.triplet], year, day);
+  if (point.kind === "reservoir" && point.chart && WY.storage.reservoirs[point.chart.abbrev])
+    return reservoirEncoding(WY.storage.reservoirs[point.chart.abbrev], point.capacity_af, year, day);
+  return null;
+}
+
+function applyWaterYear(year, day) {
+  state.wyScale = {}; state.wyLabel = {};
+  const snow = [];
+  for (const point of state.points) {
+    const enc = pointEncoding(point, year, day);
+    if (!enc) continue;
+    state.wyScale[point.id] = enc.scale;
+    state.wyLabel[point.id] = enc.label;
+    if (point.kind === "snotel") snow.push(enc);
+  }
+  map.getSource("points").setData(pointFeatures());
+  document.getElementById("wy-time").textContent = formatWaterYearDate(year, day);
+  document.getElementById("wy-caption").textContent = waterYearCaption(year, day, snow);
+}
+
+function waterYearCaption(year, day, snow) {
+  const measured = snow.filter((e) => e.median !== null && e.median > 0);
+  const bare = snow.filter((e) => e.value <= MELT_OUT_INCHES).length;
+  const ratio = measured.length
+    ? Math.round(100 * measured.reduce((sum, e) => sum + e.value / e.median, 0) / measured.length) : null;
+  const dillon = state.byId["res-dillon"] && pointEncoding(state.byId["res-dillon"], year, day);
+  return [
+    snow.length ? `${snow.length} snow stations reporting, ${bare} at bare ground.` : "No snow station data for this day.",
+    ratio !== null ? `Snowpack averages ${ratio}% of the median for this date.` : "",
+    dillon ? `Dillon Reservoir ${dillon.label}.` : "",
+  ].filter(Boolean).join(" ");
+}
+
+function meltOutRows(year) {
+  return state.points.filter((p) => p.kind === "snotel" && p.chart && WY.snow.stations[p.chart.triplet])
+    .map((p) => {
+      const history = WY.snow.stations[p.chart.triplet];
+      const cleaned = cleanedTrace(history, year);
+      return { name: p.name.replace(" SNOTEL", ""), actual: cleaned ? meltOutIndex(cleaned.values) : -1, median: meltOutIndex(history.median) };
+    })
+    .sort((a, b) => (a.actual < 0 ? 999 : a.actual) - (b.actual < 0 ? 999 : b.actual));
+}
+
+function renderMeltOut(year) {
+  const box = document.getElementById("wy-meltout");
+  const rows = meltOutRows(year).map((r) => {
+    if (r.actual < 0) return `<span>${r.name}</span><span class="note">no melt-out on record for ${year}</span>`;
+    const delta = r.actual - r.median;
+    const cls = delta <= -7 ? "early" : delta >= 7 ? "late" : "";
+    const when = waterYearDate(year, r.actual).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
+    const medianWhen = waterYearDate(year, r.median).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
+    return `<span>${r.name}</span><span class="${cls}">bare ${when} <span class="note">(median ${medianWhen}, ${delta > 0 ? "+" : ""}${delta} days)</span></span>`;
+  });
+  box.innerHTML = `<span class="note" style="grid-column:1/3;margin-top:4px">Melt-out, the day each pillow first reads bare after its peak:</span>` + rows.join("");
+}
+
+function wySet(day) {
+  WY.day = day;
+  document.getElementById("wy-day").value = day;
+  applyWaterYear(WY.year, day);
+}
+
+function wyPause() {
+  clearInterval(WY.timer); WY.timer = null;
+  document.getElementById("wy-play").textContent = "Play";
+}
+
+function wyPlay() {
+  if (WY.day >= 365) WY.day = 0;
+  WY.timer = setInterval(() => (WY.day >= 365 ? wyPause() : wySet(WY.day + 1)), WY.msPerDay);
+  document.getElementById("wy-play").textContent = "Pause";
+}
+
+function wyYearOptions() {
+  const select = document.getElementById("wy-year");
+  const years = [];
+  for (let y = 2026; y >= WY_FIRST_YEAR; y--) years.push(y);
+  select.innerHTML = years.map((y) => `<option value="${y}">Water year ${y}</option>`).join("");
+  select.value = String(WY.year);
+}
+
+async function wyStart() {
+  document.querySelector("details.howto").open = false;
+  for (const id of ["tour-start", "replay-start", "wy-start"]) document.getElementById(id).style.display = "none";
+  document.getElementById("yearbar").style.display = "block";
+  document.getElementById("detail").innerHTML = `
+    <p>Every winter since the pillows went in, replayed on the map. White diamonds
+    grow with the water held in the snowpack (scaled to each station's median peak)
+    and shrink to nothing at melt-out; blue circles grow with how full each
+    reservoir is. Pick a year, drag the slider, or press play and watch the melt
+    sweep uphill. Try 2002 or 2012 against 2023.</p>`;
+  annotateGlossary();
+  document.getElementById("wy-caption").textContent = "Loading the snow and storage records…";
+  try {
+    [WY.snow, WY.storage] = await Promise.all([loadSnotelHistory(), loadStorageHistory()]);
+  } catch (err) {
+    document.getElementById("wy-caption").textContent = "Could not load the records (" + err.message + ").";
+    return;
+  }
+  wyYearOptions();
+  addWaterYearLabels();
+  renderMeltOut(WY.year);
+  wySet(WY.day);
+  map.flyTo({ ...HOME, speed: 0.75 });
+}
+
+function wyExit() {
+  wyPause();
+  removeWaterYearLabels();
+  state.wyScale = null; state.wyLabel = null;
+  map.getSource("points").setData(pointFeatures());
+  document.getElementById("yearbar").style.display = "none";
+  for (const id of ["tour-start", "replay-start", "wy-start"]) document.getElementById(id).style.display = "block";
+  showIntro();
+}
+
+function addWaterYearLabels() {
+  if (map.getLayer("wy-labels")) return;
+  map.addLayer({ id: "wy-labels", type: "symbol", source: "points",
+    filter: ["!=", ["get", "wyLabel"], ""],
+    layout: {
+      "text-field": ["get", "wyLabel"], "text-font": ["Noto Sans Regular"],
+      "text-size": 11.5, "text-offset": [0, -1.4], "text-anchor": "bottom", "text-allow-overlap": true,
+    },
+    paint: { "text-color": "#ffffff", "text-halo-color": "rgba(16,20,24,0.95)", "text-halo-width": 1.5 } });
+}
+
+function removeWaterYearLabels() {
+  if (map.getLayer("wy-labels")) map.removeLayer("wy-labels");
+}
+
+document.getElementById("wy-start").onclick = wyStart;
+document.getElementById("wy-exit").onclick = wyExit;
+document.getElementById("wy-play").onclick = () => (WY.timer ? wyPause() : wyPlay());
+document.getElementById("wy-day").oninput = (e) => wySet(parseInt(e.target.value, 10));
+document.getElementById("wy-year").onchange = (e) => {
+  WY.year = parseInt(e.target.value, 10);
+  renderMeltOut(WY.year);
+  wySet(WY.day);
+};
 
 map.on("load", () =>
   loadEverything().catch((err) => {
