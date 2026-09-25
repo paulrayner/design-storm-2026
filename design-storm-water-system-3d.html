@@ -1034,21 +1034,19 @@ function radarUrl(date) {
   return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ridge::USCOMP-N0Q-${stamp}/{z}/{x}/{y}.png`;
 }
 
-const RADAR_OPACITY = 0.7, RAIN_TOTAL_OPACITY = 0.42;
+const RADAR_OPACITY = 0.7, RAIN_TOTAL_OPACITY = 0.45;
 
 function setRadarFrame(date) {
   setRasterOverlay(radarUrl(date), RADAR_OPACITY);
 }
 
+// Terrain rendering caches raster tiles with the opacity they were drawn at, so a
+// change of opacity rebuilds the layer; only same-opacity frame changes swap tiles in place.
 function setRasterOverlay(url, opacity) {
   const source = map.getSource("radar");
-  if (source && source.setTiles) {
-    source.setTiles([url]);
-    map.setPaintProperty("radar", "raster-opacity", opacity);
-    return;
-  }
-  if (map.getLayer("radar")) map.removeLayer("radar");
-  if (source) map.removeSource("radar");
+  const sameOpacity = map.getLayer("radar") && map.getPaintProperty("radar", "raster-opacity") === opacity;
+  if (source && source.setTiles && sameOpacity) { source.setTiles([url]); return; }
+  removeRadar();
   map.addSource("radar", { type: "raster", tiles: [url], tileSize: 256,
     maxzoom: 10, attribution: "NEXRAD and MRMS via Iowa State Mesonet" });
   map.addLayer({ id: "radar", type: "raster", source: "radar",
