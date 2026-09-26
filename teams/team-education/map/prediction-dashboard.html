@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Foothills prediction dashboard</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #101418; --ink: #f2f4f6; --ink-2: #b8c0c8; --line: rgba(255,255,255,0.14);
+    --card: rgba(255,255,255,0.04); --accent: #3987e5; --toc: #199e70; --pred: #ffd166;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { padding: 24px; max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  p.sub { color: var(--ink-2); font-size: 13px; margin: 0 0 24px; }
+  p.sub a { color: #6fc3ff; }
+  section.card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  .note { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+  .warn {
+    font-size: 12.5px; line-height: 1.5; background: rgba(255, 209, 102, 0.1);
+    border-left: 3px solid var(--pred); border-radius: 4px; padding: 8px 10px; margin: 8px 0;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 260px; }
+  canvas.chart { width: 100%; height: 160px; display: block; background: rgba(255,255,255,0.02); border-radius: 6px; }
+  canvas.chart.tall { height: 240px; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--ink-2); margin: 6px 0; }
+  .legend .sw { display: inline-block; width: 14px; height: 2px; margin-right: 5px; vertical-align: middle; }
+  .legend .sw.dashed { height: 0; border-top: 2px dashed currentColor; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-2); font-weight: 500; }
+  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 4px 0; }
+  .bar-label {
+    flex: 0 1 160px; min-width: 70px; color: var(--ink-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .bar-track { flex: 1 1 40px; min-width: 30px; background: rgba(255,255,255,0.06); border-radius: 3px; height: 12px; overflow: hidden; }
+  .bar-fill { background: var(--accent); height: 100%; }
+  .bar-value { flex: 0 0 46px; text-align: right; }
+  .metric { font-size: 20px; font-weight: 600; }
+  .metric small { font-size: 11px; font-weight: 400; color: var(--ink-2); }
+  #back-link {
+    display: inline-block; margin-bottom: 10px; font-size: 13px; color: #6fc3ff; text-decoration: none;
+  }
+  #back-link:hover { text-decoration: underline; }
+  .chart-wrap { position: relative; }
+  .chart-tip {
+    position: absolute; z-index: 2; pointer-events: none; display: none;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 4px 8px; font-size: 11px; white-space: nowrap; color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<a href="design-storm-water-system-3d.html" id="back-link">&larr; Back to map</a>
+<h1>Foothills prediction dashboard</h1>
+<p class="sub">Everything behind the TOC/alkalinity soft-sensor prediction, per Scenario 1: what the model uses,
+  how much each input actually matters, and what we tried that did and didn't work.
+  Companion to <a href="design-storm-water-system-3d.html">the 3D map</a> &mdash; click the Foothills plant
+  marker there for the quick version of this.</p>
+
+<section class="card" id="toc-section"></section>
+<section class="card" id="alk-section"></section>
+<section class="card" id="importance-section"></section>
+<section class="card" id="reservoir-section"></section>
+<section class="card" id="sonde-section"></section>
+
+<script>
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+function formatValue(v) {
+  if (v === null || v === undefined) return "—";
+  return Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (Math.round(v * 100) / 100).toString();
+}
+
+function parseDate(t) {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(t) ? t + "T12:00:00" : t);
+}
+function formatDate(t) {
+  return parseDate(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function tipElementFor(canvas) {
+  return canvas.parentElement.querySelector(".chart-tip");
+}
+
+// Multi-line chart with hover crosshair + tooltip. labels map each key to a
+// display name; dates (optional) let the tooltip show a date instead of index.
+function drawSeries(canvas, series, keys, colors, labels = {}, dates = null) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 14, bottom: 16, left: 4, right: 46 };
+  const values = series.flatMap((d) => keys.map((k) => d[k])).filter((v) => v !== null && v !== undefined);
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min || 1;
+  const last = series.length - 1;
+  const x = (i) => pad.left + (i / (last || 1)) * (w - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - min) / span) * (h - pad.top - pad.bottom);
+
+  function render(highlight) {
+    g.clearRect(0, 0, w, h);
+    keys.forEach((key, ki) => {
+      g.strokeStyle = colors[ki]; g.lineWidth = ki === 1 ? 1.6 : 2; g.lineJoin = "round";
+      if (ki === 1) g.setLineDash([4, 3]);
+      g.beginPath();
+      series.forEach((d, i) => {
+        const v = d[key];
+        if (v === null || v === undefined) return;
+        i === 0 ? g.moveTo(x(i), y(v)) : g.lineTo(x(i), y(v));
+      });
+      g.stroke();
+      g.setLineDash([]);
+    });
+    g.fillStyle = "rgba(184,192,200,0.9)"; g.font = "10px -apple-system, sans-serif"; g.textAlign = "left";
+    g.fillText(formatValue(max), w - pad.right + 4, y(max) + 4);
+    g.fillText(formatValue(min), w - pad.right + 4, y(min) + 4);
+    if (highlight < 0) return;
+    g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x(highlight), pad.top); g.lineTo(x(highlight), h - pad.bottom); g.stroke();
+    keys.forEach((key, ki) => {
+      const v = series[highlight][key];
+      if (v === null || v === undefined) return;
+      g.fillStyle = colors[ki];
+      g.beginPath(); g.arc(x(highlight), y(v), 3, 0, Math.PI * 2); g.fill();
+    });
+  }
+
+  render(-1);
+  const tip = tipElementFor(canvas);
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (e.clientX - rect.left - pad.left) / (w - pad.left - pad.right);
+    const i = Math.max(0, Math.min(last, Math.round(fraction * last)));
+    render(i);
+    if (tip) {
+      const d = series[i];
+      const parts = keys.filter((k) => d[k] !== null && d[k] !== undefined)
+        .map((k) => `${labels[k] || k}: ${formatValue(d[k])}`);
+      const when = dates ? formatDate(dates[i]) : `#${i + 1}`;
+      tip.innerHTML = `<b>${when}</b><br>${parts.join("<br>")}`;
+      tip.style.display = "block";
+      tip.style.left = `${Math.min(e.clientX - rect.left + 10, w - 130)}px`;
+      tip.style.top = `${Math.max(0, e.clientY - rect.top - 30)}px`;
+    }
+  };
+  canvas.onmouseleave = () => { render(-1); if (tip) tip.style.display = "none"; };
+}
+
+function bar(label, value, max, suffix = "%") {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return `<div class="bar-row">
+    <div class="bar-label">${label}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+    <div class="bar-value">${(value * 100).toFixed(1)}${suffix}</div>
+  </div>`;
+}
+
+async function render() {
+  const [pred, extra] = await Promise.all([
+    fetchJson("../dashboard/foothills-prediction.json"),
+    fetchJson("../dashboard/dashboard-extra.json"),
+  ]);
+
+  document.getElementById("toc-section").innerHTML = `
+    <h2>TOC soft sensor</h2>
+    <div class="legend">
+      <span><span class="sw" style="background:#199e70"></span>Measured</span>
+      <span><span class="sw dashed" style="color:#ffd166"></span>Predicted (${pred.toc.model})</span>
+    </div>
+    <div class="chart-wrap"><div class="chart-tip"></div>
+    <canvas class="chart tall" id="toc-chart"></canvas></div>
+    <p class="note">R&sup2;=${pred.toc.metrics.r2} &middot; RMSE=${pred.toc.metrics.rmse} mg/L &middot;
+      scored on ${pred.toc.metrics.test_days} held-out days &middot; ${pred.toc.lag_days}-day lag &middot;
+      backtest only, not a live forecast.</p>`;
+  drawSeries(document.getElementById("toc-chart"),
+    pred.toc.series.map((d) => ({ actual: d.actual, predicted: d.predicted })),
+    ["actual", "predicted"], ["#199e70", "#ffd166"],
+    { actual: "Measured", predicted: "Predicted" }, pred.toc.series.map((d) => d.date));
+
+  document.getElementById("alk-section").innerHTML = `
+    <h2>Alkalinity soft sensor</h2>
+    <div class="legend">
+      <span><span class="sw" style="background:#3987e5"></span>Measured</span>
+      <span><span class="sw dashed" style="color:#ffd166"></span>Predicted (${pred.alk.model})</span>
+    </div>
+    <div class="chart-wrap"><div class="chart-tip"></div>
+    <canvas class="chart tall" id="alk-chart"></canvas></div>
+    <p class="note">R&sup2;=${pred.alk.metrics.r2} &middot; RMSE=${pred.alk.metrics.rmse} mg/L &middot;
+      scored on ${pred.alk.metrics.test_days} held-out days &middot; up to ${pred.alk.lag_days}-day lag
+      (upstream reservoirs) &middot; backtest only, not a live forecast.</p>`;
+  drawSeries(document.getElementById("alk-chart"),
+    pred.alk.series.map((d) => ({ actual: d.actual, predicted: d.predicted })),
+    ["actual", "predicted"], ["#3987e5", "#ffd166"],
+    { actual: "Measured", predicted: "Predicted" }, pred.alk.series.map((d) => d.date));
+
+  const imp = pred.alk.feature_importance || {};
+  const maxImp = Math.max(...Object.values(imp));
+  const sorted = Object.entries(imp).sort((a, b) => b[1] - a[1]);
+  const reservoirTotal = sorted.filter(([k]) => /^(Antero|ElevenMile|Cheesman|Dillon)_/.test(k))
+    .reduce((s, [, v]) => s + v, 0);
+  document.getElementById("importance-section").innerHTML = `
+    <h2>What actually drives the alkalinity prediction</h2>
+    <p class="note">Real feature importance from the trained model, not an assumption.</p>
+    ${sorted.map(([k, v]) => bar(k, v, maxImp)).join("")}
+    <div class="warn">All four upstream reservoirs combined: only ${(reservoirTotal * 100).toFixed(1)}% of the
+      model. Specific conductance and season still dominate &mdash; see the note below on why.</div>`;
+
+  const rs = extra.reservoir_snapshot;
+  document.getElementById("reservoir-section").innerHTML = `
+    <h2>Upstream reservoirs, latest reading (${formatDate(rs.date)})</h2>
+    <table><tr><th>Reservoir</th><th>Inflow (cfs)</th><th>Outflow (cfs)</th><th>% full</th></tr>
+      ${Object.entries(rs.reservoirs).map(([name, r]) => r ? `
+        <tr><td>${name}</td><td>${formatValue(r.inflow_cfs)}</td><td>${formatValue(r.outflow_cfs)}</td>
+          <td>${formatValue(r.pct_full)}%</td></tr>` : "").join("")}
+    </table>
+    <p class="note">From Denver Water's own daily reservoir-levels report, scraped and cached locally.
+      Preliminary, subject to change.</p>`;
+
+  const lagRows = (rows) => rows.map((r) => `
+    <tr><td>${r.lag_days}d</td><td>${r.rows}</td>
+      <td>${r.gage_only_r2}</td><td>${r.plus_sonde_r2}</td>
+      <td style="color:${r.plus_sonde_r2 > r.gage_only_r2 ? '#4ade80' : '#f87171'}">
+        ${(r.plus_sonde_r2 - r.gage_only_r2 >= 0 ? "+" : "")}${(r.plus_sonde_r2 - r.gage_only_r2).toFixed(3)}</td></tr>`
+  ).join("");
+  document.getElementById("sonde-section").innerHTML = `
+    <h2>Strontia sonde: does the closer-in sensor help?</h2>
+    <p class="note">Cassidi's starred question (kickoff deck): the sonde sits much nearer the Foothills
+      intake than the sentinel gage, which may sharpen accuracy but shortens the warning window.
+      Jake's models never use this data. It only covers ${extra.sonde_series.length} days
+      (${extra.sonde_series[0].date} to ${extra.sonde_series[extra.sonde_series.length - 1].date}),
+      a fraction of the gage record.</p>
+    <div class="warn">${extra.note}</div>
+    <div class="row">
+      <div>
+        <div class="legend">
+          <span><span class="sw" style="background:#d95926"></span>Turbidity (NTU)</span>
+          <span><span class="sw" style="background:#3ec6ff"></span>Chlorophyll (&mu;g/L)</span>
+        </div>
+        <div class="chart-wrap"><div class="chart-tip"></div>
+        <canvas class="chart" id="sonde-chart"></canvas></div>
+        <p class="note">Daily mean across all depths, Apr&ndash;Aug 2026.</p>
+      </div>
+      <div>
+        <div class="legend"><span><span class="sw" style="background:#3987e5"></span>ORP (mV)</span></div>
+        <div class="chart-wrap"><div class="chart-tip"></div>
+        <canvas class="chart" id="sonde-orp-chart"></canvas></div>
+        <p class="note">Oxidation-reduction potential: falling ORP with depth signals the reservoir
+          stratifying (see the depth profile below).</p>
+      </div>
+    </div>
+    <h3 style="font-size:13px;margin:14px 0 4px">TOC / alkalinity: gage-only vs. +sonde, by lag (same window each time)</h3>
+    <div class="row">
+      <div>
+        <table><tr><th>Lag</th><th>Rows</th><th>Gage-only R&sup2;</th><th>+Sonde R&sup2;</th><th>&Delta;</th></tr>
+          ${lagRows(extra.sonde_lag_test.toc)}</table>
+        <p class="note">TOC</p>
+      </div>
+      <div>
+        <table><tr><th>Lag</th><th>Rows</th><th>Gage-only R&sup2;</th><th>+Sonde R&sup2;</th><th>&Delta;</th></tr>
+          ${lagRows(extra.sonde_lag_test.alk)}</table>
+        <p class="note">Alkalinity &mdash; consistently less negative with sonde features at every lag, though
+          both are still below zero (worse than guessing the mean) on this small a sample. Suggestive,
+          not something to act on yet.</p>
+      </div>
+    </div>
+    <h3 style="font-size:13px;margin:14px 0 4px">Latest depth profile (${extra.sonde_depth_profile.date})</h3>
+    <div class="legend">
+      <span><span class="sw" style="background:#3ec6ff"></span>Chlorophyll</span>
+      <span><span class="sw" style="background:#a78bfa"></span>Phycocyanin</span>
+      <span><span class="sw" style="background:#d95926"></span>Turbidity</span>
+    </div>
+    <div class="chart-wrap"><div class="chart-tip"></div>
+    <canvas class="chart tall" id="depth-chart"></canvas></div>
+    <p class="note">Each point is one reading at depth from the most recent cast. Chlorophyll/phycocyanin
+      concentrated at a particular depth would indicate a stratified algal layer; falling ORP with depth
+      indicates the reservoir bottom is losing oxygen.</p>`;
+
+  drawSeries(document.getElementById("sonde-chart"),
+    extra.sonde_series.map((d) => ({ a: d.turbidity_ntu_mean, b: d.chl_ugl_mean * 20 })),
+    ["a", "b"], ["#d95926", "#3ec6ff"],
+    { a: "Turbidity (NTU)", b: "Chlorophyll x20 (\u00b5g/L equiv.)" }, extra.sonde_series.map((d) => d.date));
+  drawSeries(document.getElementById("sonde-orp-chart"),
+    extra.sonde_series.map((d) => ({ a: d.orp_mv_mean })), ["a"], ["#3987e5"],
+    { a: "ORP (mV)" }, extra.sonde_series.map((d) => d.date));
+  drawDepthProfile(document.getElementById("depth-chart"), extra.sonde_depth_profile.readings);
+}
+
+function drawDepthProfile(canvas, readings) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 10, bottom: 16, left: 4, right: 50 };
+  const maxDepth = Math.max(...readings.map((r) => r.depth_m));
+  const series = { chl_ugl: "#3ec6ff", phycocyanin: "#a78bfa", turbidity_ntu: "#d95926" };
+  const maxVal = Math.max(...Object.keys(series).flatMap((k) => readings.map((r) => r[k])));
+  const y = (depth) => pad.top + (depth / maxDepth) * (h - pad.top - pad.bottom);
+  const x = (v) => pad.left + (v / maxVal) * (w - pad.left - pad.right);
+
+  function render(highlightIdx) {
+    g.clearRect(0, 0, w, h);
+    for (const [key, color] of Object.entries(series)) {
+      g.strokeStyle = color; g.lineWidth = 1.8; g.beginPath();
+      readings.forEach((r, i) => (i === 0 ? g.moveTo(x(r[key]), y(r.depth_m)) : g.lineTo(x(r[key]), y(r.depth_m))));
+      g.stroke();
+    }
+    g.fillStyle = "rgba(184,192,200,0.9)"; g.font = "10px -apple-system, sans-serif"; g.textAlign = "left";
+    g.fillText(`${maxDepth.toFixed(0)} m deep`, w - pad.right + 4, y(maxDepth));
+    g.fillText("surface", w - pad.right + 4, y(0) + 4);
+    if (highlightIdx === null) return;
+    const r = readings[highlightIdx];
+    g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(pad.left, y(r.depth_m)); g.lineTo(w - pad.right, y(r.depth_m)); g.stroke();
+    for (const [key, color] of Object.entries(series)) {
+      g.fillStyle = color;
+      g.beginPath(); g.arc(x(r[key]), y(r.depth_m), 3, 0, Math.PI * 2); g.fill();
+    }
+  }
+
+  render(null);
+  const tip = tipElementFor(canvas);
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (e.clientY - rect.top - pad.top) / (h - pad.top - pad.bottom);
+    const targetDepth = Math.max(0, Math.min(maxDepth, fraction * maxDepth));
+    let closest = 0, closestDist = Infinity;
+    readings.forEach((r, i) => {
+      const dist = Math.abs(r.depth_m - targetDepth);
+      if (dist < closestDist) { closest = i; closestDist = dist; }
+    });
+    render(closest);
+    if (tip) {
+      const r = readings[closest];
+      tip.innerHTML = `<b>${r.depth_m} m deep</b><br>Chlorophyll: ${formatValue(r.chl_ugl)}<br>`
+        + `Phycocyanin: ${formatValue(r.phycocyanin)}<br>Turbidity: ${formatValue(r.turbidity_ntu)} NTU<br>`
+        + `ORP: ${formatValue(r.orp_mv)} mV`;
+      tip.style.display = "block";
+      tip.style.left = `${Math.min(e.clientX - rect.left + 10, w - 140)}px`;
+      tip.style.top = `${Math.max(0, e.clientY - rect.top - 60)}px`;
+    }
+  };
+  canvas.onmouseleave = () => { render(null); if (tip) tip.style.display = "none"; };
+}
+
+render().catch((err) => {
+  document.body.insertAdjacentHTML("beforeend", `<p style="color:#f87171">Failed to load: ${err.message}</p>`);
+});
+
+if (new URLSearchParams(location.search).get("embedded")) {
+  // The overlay panel supplies its own single close button; no need for a second one in here.
+  document.getElementById("back-link").style.display = "none";
+}
+</script>
+</body>
+</html>

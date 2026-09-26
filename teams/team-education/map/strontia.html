@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Strontia Springs, by depth</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="team-chat.css">
+<!-- Team addition (teams/team-education): the Strontia Springs depth panel in its own window, with lessons
+     for ages 13 to 16 (strontia-lessons.json, analysis/build_lessons.py) and an Explore view.
+     Shared code: strontia-core.js (drawing), team-chat.js / team-chat.css (chat). -->
+<style>
+  :root {
+    --panel-bg: rgba(16, 20, 24, 0.92);
+    --panel-ink: #f2f4f6;
+    --panel-ink-2: #b8c0c8;
+    --panel-line: rgba(255, 255, 255, 0.14);
+    --page-bg: #101418;
+    --card-bg: #161b21;
+    --accent: #1c5cab;
+    --link: #6fc3ff;
+    --mark: #ffd166;
+    --good: #5fd39a;
+    --kind: #ffb4a8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page-bg); color: var(--panel-ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { min-height: 100vh; overflow-x: hidden; }
+  a { color: var(--link); }
+  header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+    padding: 14px 20px 12px; border-bottom: 1px solid var(--panel-line); }
+  header.top h1 { font-size: 19px; margin: 0; }
+  header.top .sub { font-size: 12.5px; color: var(--panel-ink-2); margin: 2px 0 0; }
+  header.top .grow { flex: 1; min-width: 200px; }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.05); color: var(--panel-ink-2);
+  }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { padding: 16px 20px 110px; max-width: 1240px; margin: 0 auto; }
+  [hidden] { display: none !important; }
+
+  /* ---- Lessons ---- */
+  #lessons { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; align-items: start; }
+  #lesson-nav { position: sticky; top: 12px; }
+  #lesson-nav h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--panel-ink-2); margin: 4px 0 8px; }
+  #lesson-list { list-style: none; margin: 0; padding: 0; }
+  #lesson-list button {
+    width: 100%; display: flex; gap: 10px; align-items: baseline; text-align: left; cursor: pointer;
+    font: inherit; font-size: 13.5px; padding: 8px 10px; margin-bottom: 4px; border-radius: 8px;
+    border: 1px solid transparent; background: none; color: var(--panel-ink);
+  }
+  #lesson-list button:hover { background: rgba(255, 255, 255, 0.05); }
+  #lesson-list button[aria-current="true"] { background: rgba(57, 135, 229, 0.18); border-color: rgba(111, 195, 255, 0.5); }
+  #lesson-list .num { width: 22px; flex: none; color: var(--panel-ink-2); font-variant-numeric: tabular-nums; }
+  #lesson-list .t { flex: 1; }
+  #lesson-list .done { color: var(--good); font-weight: 700; }
+  #lesson-progress { font-size: 12px; color: var(--panel-ink-2); margin: 10px 2px 0; }
+  button.linkbtn { font: inherit; font-size: 12px; margin: 6px 2px 0; padding: 2px 0; border: 0; background: none;
+    color: var(--link); text-decoration: underline; cursor: pointer; }
+  button.linkbtn.confirm { color: var(--kind); }
+  #lesson-select { display: none; width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--panel-line); background: var(--card-bg); color: var(--panel-ink); }
+
+  #card { background: var(--card-bg); border: 1px solid var(--panel-line); border-radius: 14px; padding: 18px 22px 20px; min-width: 0; }
+  .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--panel-ink-2); }
+  #card h2 { font-size: 24px; margin: 4px 0 10px; }
+  ol.steps { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 14px; flex-wrap: wrap; }
+  ol.steps li { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--panel-line); color: var(--panel-ink-2); }
+  ol.steps li[aria-current="step"] { color: #fff; background: var(--accent); border-color: var(--accent); }
+  ol.steps li.past { color: var(--panel-ink); }
+  .look { font-size: 16px; line-height: 1.55; margin: 0 0 12px; }
+  .look b.tag, .why b.tag { color: var(--mark); font-weight: 600; margin-right: 4px; }
+  .visual { margin: 10px 0 16px; }
+  .vis-title { font-size: 12.5px; color: var(--panel-ink-2); margin: 0 0 4px; }
+  canvas.heat { width: 100%; height: 240px; display: block; cursor: crosshair; touch-action: pan-y; }
+  canvas.strip { width: 100%; height: 64px; display: block; }
+  canvas.line { width: 100%; height: 150px; display: block; cursor: crosshair; touch-action: pan-y; }
+  canvas.profile { width: 100%; height: 280px; display: block; cursor: crosshair; touch-action: pan-y; }
+  .visuals.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 22px; align-items: end; }
+  .legend .sw.dash { height: 0; border-top: 2px dashed #ffd166; background: none !important; }
+  .readout { font-size: 12.5px; min-height: 18px; margin: 4px 0 2px; color: var(--panel-ink-2); font-variant-numeric: tabular-nums; }
+  .readout b { color: var(--panel-ink); font-weight: 600; }
+  .key { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--panel-ink-2); margin-top: 4px; }
+  .key .ramp { flex: 1; height: 8px; border-radius: 4px; }
+  .key .gap { width: 14px; height: 8px; border-radius: 2px; border: 1px solid var(--panel-line);
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,0.14) 0 2px, transparent 2px 5px); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--panel-ink); margin: 0 0 4px; }
+  .legend .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+  .question { margin-top: 6px; }
+  .question .prompt { font-size: 17px; font-weight: 600; line-height: 1.45; margin: 0 0 10px; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choices button {
+    font: inherit; font-size: 15.5px; text-align: left; padding: 11px 14px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.05); color: var(--panel-ink);
+    display: flex; gap: 10px; align-items: baseline;
+  }
+  .choices button:hover:not(:disabled) { border-color: rgba(111, 195, 255, 0.6); background: rgba(111, 195, 255, 0.08); }
+  .choices button:disabled { cursor: default; }
+  .choices .letter { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; border: 1px solid var(--panel-line); color: var(--panel-ink-2); }
+  .choices button.correct { border-color: var(--good); background: rgba(95, 211, 154, 0.12); }
+  .choices button.wrong { border-color: var(--kind); background: rgba(255, 180, 168, 0.08); }
+  .choices .mark { margin-left: auto; font-size: 13px; white-space: nowrap; }
+  .feedback { margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 15px; line-height: 1.55; }
+  .feedback.right { background: rgba(95, 211, 154, 0.12); border-left: 4px solid var(--good); }
+  .feedback.miss { background: rgba(255, 180, 168, 0.08); border-left: 4px solid var(--kind); }
+  .feedback .headline { font-weight: 700; font-size: 16.5px; display: block; margin-bottom: 4px; }
+  .feedback .answer { display: block; margin-bottom: 6px; }
+  .why { padding: 12px 14px; border-radius: 10px; background: rgba(57, 135, 229, 0.12); border-left: 4px solid #3987e5;
+    font-size: 15px; line-height: 1.55; }
+  .why .label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--panel-ink-2); margin-bottom: 4px; }
+  .why p { margin: 0 0 8px; }
+  .why p.comparison { margin: 0; color: var(--panel-ink); font-style: italic; }
+  .hint { font-size: 12.5px; color: var(--panel-ink-2); margin-top: 8px; }
+  .card-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; align-items: center; }
+  .card-nav .spacer { flex: 1; }
+  button.btn {
+    font: inherit; font-size: 14px; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+    border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.08); color: var(--panel-ink);
+  }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ---- Round 3: opening screen, bonus group, per-choice feedback, connect / care boxes ---- */
+  #lesson-list button.start { font-weight: 600; }
+  #lesson-list button.start .num { color: var(--mark); }
+  #lesson-list li.group { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--panel-ink-2);
+    margin: 12px 2px 6px; padding-top: 10px; border-top: 1px solid var(--panel-line); }
+  .pill { display: inline-block; font-size: 10.5px; padding: 0 6px; border-radius: 999px; margin-left: 4px;
+    border: 1px solid rgba(255, 209, 102, 0.6); color: var(--mark); vertical-align: 1px; white-space: nowrap; }
+  .kicker .opt { color: var(--mark); }
+  ol.flow { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 6px 0 16px; }
+  ol.flow li { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.03); font-size: 13.5px; line-height: 1.4; }
+  ol.flow li svg { width: 30px; height: 30px; color: var(--link); margin-bottom: 2px; }
+  ol.flow li b { font-size: 14.5px; }
+  ol.flow li span { color: var(--panel-ink-2); }
+  ol.flow li em { font-style: normal; font-size: 12px; color: var(--mark); }
+  ol.flow li.here { border-color: rgba(255, 209, 102, 0.55); background: rgba(255, 209, 102, 0.06); }
+  ol.flow li:not(:last-child)::after { content: "\2192"; position: absolute; right: -5px; top: 50%; transform: translate(50%, -50%);
+    color: var(--panel-ink-2); font-size: 16px; }
+  blockquote.quote { margin: 0 0 14px; padding: 8px 14px; border-left: 3px solid var(--mark); font-size: 16px; line-height: 1.5; }
+  blockquote.quote cite { display: block; font-size: 12.5px; font-style: normal; color: var(--panel-ink-2); margin-top: 2px; }
+  .qnum { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mark); margin: 16px 0 4px; }
+  .feedback .whynot { display: block; margin-bottom: 8px; }
+  .connect, .care { margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: 15px; line-height: 1.55; }
+  .connect { background: rgba(255, 209, 102, 0.07); border-left: 4px solid var(--mark); }
+  .care { background: rgba(95, 211, 154, 0.08); border-left: 4px solid var(--good); }
+  .connect .label, .care .label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--panel-ink-2); margin-bottom: 4px; }
+  .connect p, .care p { margin: 0; }
+  ol.chain { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 2px; padding: 0; margin: 2px 0 8px; font-size: 12px; }
+  ol.chain li { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--panel-line); color: var(--panel-ink-2); }
+  ol.chain li + li::before { content: "\2192"; margin: 0 6px 0 -4px; color: var(--panel-ink-2); }
+  ol.chain li.past { color: var(--panel-ink); border-color: rgba(255, 209, 102, 0.35); }
+  ol.chain li.now { color: #101418; background: var(--mark); border-color: var(--mark); font-weight: 600; }
+  ol.chain li.now::before { color: #101418; }
+  .vis-title .note { color: var(--mark); font-weight: 600; }
+  .done-note { font-size: 14px; color: var(--panel-ink); }
+
+  /* ---- Explore ---- */
+  #explore .intro { font-size: 14px; line-height: 1.5; color: var(--panel-ink-2); max-width: 760px; margin: 0 0 12px; }
+  #explore-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }  #x-read { position: sticky; top: 0; z-index: 3; background: rgba(16, 20, 24, 0.96); border-bottom: 1px solid var(--panel-line);
+    padding: 8px 0; font-size: 13px; font-variant-numeric: tabular-nums; min-height: 38px; }
+  #x-read .vals { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 2px; }
+  #x-read .vals span { white-space: nowrap; }
+  #x-read b { font-weight: 600; }
+  #x-panels { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .x-panel .vis-title { margin-top: 8px; }
+  .stack { position: relative; }
+  .stack canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #x-panels canvas.heat { height: 150px; }
+  .x-panel .key { margin-top: 2px; }
+
+  /* ---- Dashboard tab (folded in from the prediction dashboard) ---- */
+  #dashboard iframe { width: 100%; height: 80vh; border: 0; display: block; border-radius: 10px; background: var(--card-bg); }
+
+  footer { font-size: 11.5px; line-height: 1.55; color: var(--panel-ink-2); border-top: 1px solid var(--panel-line);
+    padding: 14px 20px 90px; max-width: 1240px; margin: 0 auto; }
+  footer p { margin: 0 0 6px; }
+
+  @media (max-width: 820px) {
+    #lessons { grid-template-columns: 1fr; gap: 12px; }
+    #lesson-nav { position: static; }
+    #lesson-nav h2, #lesson-list { display: none; }
+    #lesson-select { display: block; }
+    #lesson-progress { margin-top: 6px; }
+  }
+  @media (max-width: 640px) {
+    header.top { padding: 12px 16px 10px; }
+    main { padding: 12px 16px 100px; }
+    footer { padding: 12px 16px 90px; }
+    #card { padding: 14px 14px 16px; border-radius: 12px; }
+    #card h2 { font-size: 21px; }
+    .look { font-size: 15.5px; }
+    canvas.heat { height: 210px; }
+    #x-panels canvas.heat { height: 130px; }
+    .visuals.pair { grid-template-columns: 1fr; }
+    canvas.profile { height: 250px; }
+    ol.flow { grid-template-columns: 1fr; gap: 14px; }
+    ol.flow li { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 10px; align-items: center; }
+    ol.flow li svg { grid-row: span 3; margin: 0; }
+    ol.flow li:not(:last-child)::after { content: "\2193"; right: auto; left: 29px; top: auto; bottom: -7px; transform: translate(-50%, 50%); }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="grow">
+    <h1>Strontia Springs, by depth</h1>
+    <p class="sub" id="sub">Inside a Denver Water reservoir, measured from top to bottom.</p>
+  </div>
+  <div class="seg" role="group" aria-label="Mode">
+    <button type="button" data-mode="lessons">Lessons</button>
+    <button type="button" data-mode="explore">Explore</button>
+    <button type="button" data-mode="dashboard">Dashboard</button>
+  </div>
+</header>
+
+<main>
+  <section id="lessons" aria-label="Lessons">
+    <nav id="lesson-nav" aria-label="Lesson list">
+      <h2>Lessons</h2>
+      <ol id="lesson-list"></ol>
+      <label class="sr" for="lesson-select" hidden>Lesson</label>
+      <select id="lesson-select" aria-label="Choose a lesson"></select>
+      <div id="lesson-progress"></div>
+      <button type="button" id="reset-progress" class="linkbtn">Reset progress</button>
+    </nav>
+    <article id="card" aria-live="polite"><p class="look">Loading the lessons&hellip;</p></article>
+  </section>
+
+  <section id="explore" aria-label="Explore" hidden>
+    <p class="intro">Every picture below uses the same clock and the same depths. Move over any one of
+      them (or tap it) and the crosshair shows the same moment and depth on all of them, with every
+      value listed at the top. Dotted lines mark sensor servicing; in the storm view the yellow dashed
+      line is the river gage peak.</p>
+    <div id="explore-controls">
+      <div class="seg" role="group" aria-label="Time range">
+        <button type="button" data-view="storm">Aug 14-15 storm</button>
+        <button type="button" data-view="season">Whole season</button>
+      </div>
+    </div>
+    <div id="x-read" aria-live="off"></div>
+    <div id="x-panels"></div>
+  </section>
+
+  <section id="dashboard" aria-label="Dashboard" hidden>
+    <p class="intro">The same prediction dashboard the map's overlay button opens, in its own tab.</p>
+    <iframe id="dashboard-frame" title="Prediction dashboard"></iframe>
+  </section>
+</main>
+
+<footer>
+  <p><b>Readings are provisional.</b> <span id="terms"></span></p>
+  <p>Method and evidence: <code>teams/team-education/FINDINGS.md</code>. Full data terms:
+    <a href="DATA-TERMS.md" target="_blank" rel="noopener">DATA-TERMS.md</a>.
+    <a href="design-storm-water-system-3d">Back to the map</a>.</p>
+</footer>
+
+<script src="strontia-core.js"></script>
+<script src="team-chat.js"></script>
+<script>
+"use strict";
+// S.lesson is an index into S.L.lessons, or START (-1) for the opening screen ("Start here").
+const START = -1;
+const S = { P: null, L: null, mode: "lessons", lesson: START, step: 0, answers: {}, done: new Set(),
+            view: "storm", hover: "", praise: {} };
+const PRAISE = ["Good job!", "Nice thinking!", "You got it!", "Great reasoning!", "Spot on!"];
+const EXPLORE_PARAMS = ["temp_c", "odo_mg_l", "odo_pct_sat", "turb_ntu", "spcond_us_cm"];
+const STORE_KEY = "strontia-lessons-progress-v1";
+
+// ---- progress in localStorage (the page works without it) -----------------------------------
+// First visit (nothing saved, or storage blocked): the opening screen.
+function loadProgress() {
+  try {
+    const raw = window.localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    (p.done || []).forEach((id) => S.done.add(id));
+    const at = S.L.lessons.findIndex((l) => l.id === p.at);
+    if (at >= 0) S.lesson = at;
+  } catch (err) { /* storage blocked or corrupt: start fresh */ }
+}
+function saveProgress() {
+  try {
+    window.localStorage.setItem(STORE_KEY, JSON.stringify({ done: [...S.done],
+      at: S.lesson === START ? "start" : S.L.lessons[S.lesson].id }));
+  } catch (err) { /* storage blocked: progress lasts for this visit only */ }
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+// Core lessons are the numbered ones plus "Put it all together"; bonus lessons are optional and counted apart.
+const core = () => S.L.lessons.filter((l) => !l.bonus);
+const bonus = () => S.L.lessons.filter((l) => l.bonus);
+const questionsOf = (L) => L.questions || [L.question];
+const stepsOf = (L) => {
+  const q = questionsOf(L);
+  return ["Look", ...(q.length > 1 ? q.map((_, i) => `Question ${i + 1}`) : ["Question"]), "Why"];
+};
+const lastStep = (L) => questionsOf(L).length + 1;
+const answerOf = (L, qi) => (S.answers[L.id] || {})[qi];
+function lessonLabel(l) { return l.bonus ? '<span title="Bonus lesson" aria-label="Bonus">&#9733;</span>' : String(l.n); }
+function bonusName(l) { return `bonus lesson ${bonus().indexOf(l) + 1} of ${bonus().length}`; }
+function lessonName(l) { return l.bonus ? bonusName(l) : `lesson ${l.n} of ${core().length}`; }
+function bonusMinutes() { return S.L.intro && S.L.intro.minutes_bonus ? ` (about ${S.L.intro.minutes_bonus} min)` : ""; }
+
+// ---- lesson list -----------------------------------------------------------------------------
+function renderList() {
+  const list = document.getElementById("lesson-list"), sel = document.getElementById("lesson-select");
+  const item = (l, k) => `<li><button type="button" data-k="${k}" ${k === S.lesson ? 'aria-current="true"' : ""}>
+      <span class="num">${lessonLabel(l)}</span><span class="t">${esc(l.title)}${l.whatif ? ' <span class="pill">what if</span>' : ""}</span>
+      ${S.done.has(l.id) ? '<span class="done" aria-label="finished">&#10003;</span>' : ""}</button></li>`;
+  const idx = (l) => S.L.lessons.indexOf(l);
+  list.innerHTML =
+    `<li><button type="button" class="start" data-k="${START}" ${S.lesson === START ? 'aria-current="true"' : ""}>
+      <span class="num">&#9654;</span><span class="t">Start here</span></button></li>` +
+    core().map((l) => item(l, idx(l))).join("") +
+    (bonus().length ? `<li class="group" role="presentation">Bonus: if you have time${bonusMinutes()}</li>` +
+      bonus().map((l) => item(l, idx(l))).join("") : "");
+  list.querySelectorAll("button").forEach((b) => b.onclick = () => goLesson(+b.dataset.k));
+  const opt = (l) => `<option value="${idx(l)}" ${idx(l) === S.lesson ? "selected" : ""}>
+      ${l.bonus ? "Bonus" : "Lesson " + l.n}: ${esc(l.title)}${S.done.has(l.id) ? " ✓" : ""}</option>`;
+  sel.innerHTML = `<option value="${START}" ${S.lesson === START ? "selected" : ""}>Start here</option>` +
+    core().map(opt).join("") +
+    (bonus().length ? `<optgroup label="Bonus: if you have time${bonusMinutes()}">${bonus().map(opt).join("")}</optgroup>` : "");
+  sel.onchange = () => goLesson(+sel.value);
+  const n = core().filter((l) => S.done.has(l.id)).length, nb = bonus().filter((l) => S.done.has(l.id)).length;
+  document.getElementById("lesson-progress").textContent =
+    `${n} of ${core().length} finished` + (bonus().length ? ` · bonus: ${nb} of ${bonus().length}` : "");
+}
+
+// Start the lessons again: clears the ticks, the answers and the saved place. Asks once to confirm.
+function resetProgress() {
+  const btn = document.getElementById("reset-progress");
+  if (!btn.classList.contains("confirm")) {
+    btn.classList.add("confirm");
+    btn.textContent = "Clear all ticks and answers? Tap again to confirm";
+    clearTimeout(resetProgress.timer);
+    resetProgress.timer = setTimeout(() => { btn.classList.remove("confirm"); btn.textContent = "Reset progress"; }, 5000);
+    return;
+  }
+  clearTimeout(resetProgress.timer);
+  btn.classList.remove("confirm"); btn.textContent = "Reset progress";
+  S.done.clear(); S.answers = {}; S.praise = {};
+  try { window.localStorage.removeItem(STORE_KEY); } catch (err) { /* storage blocked */ }
+  goLesson(START);
+}
+
+function goLesson(k, step = 0) {
+  S.lesson = Math.max(START, Math.min(S.L.lessons.length - 1, k));
+  S.step = step;
+  saveProgress();
+  renderList();
+  renderCard();
+  TeamChat.refresh();
+  document.getElementById("card").scrollIntoView({ block: "nearest" });
+}
+
+// ---- opening screen ----------------------------------------------------------------------------
+const FLOW_ICONS = [
+  // river: three waves
+  '<path d="M4 12c4-4 8 4 12 0s8 4 12 0M4 19c4-4 8 4 12 0s8 4 12 0M4 26c4-4 8 4 12 0s8 4 12 0"/>',
+  // reservoir: dam wall and water with a sonde line
+  '<path d="M4 10h18v18H4zM22 6l8 22"/><path d="M13 10v14" stroke-dasharray="2 2"/><circle cx="13" cy="25" r="2"/>',
+  // treatment plant: building with tanks
+  '<path d="M5 28V14l7-5 7 5v14zM19 28V18h9v10zM9 28v-6h6v6"/>',
+  // tap: faucet and a drop
+  '<path d="M6 12h14a4 4 0 0 1 4 4v3M6 9v6M24 23c-2 3-2 5 0 5s2-2 0-5z"/>',
+];
+function renderIntro(card) {
+  const I = S.L.intro;
+  const flow = I.chain.map((c, k) => `<li class="${k === 1 ? "here" : ""}">
+      <svg viewBox="0 0 34 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round">${FLOW_ICONS[k] || ""}</svg>
+      <b>${esc(c.label)}</b><span>${esc(c.text)}</span>${k === 1 ? '<em>The water scan is here</em>' : ""}</li>`).join("");
+  card.innerHTML = `
+    <div class="kicker">Start here &middot; a quick overview before lesson 1</div>
+    <h2>${esc(I.title)}</h2>
+    <ol class="flow" aria-label="Where Denver's water goes, in four steps">${flow}</ol>
+    <blockquote class="quote">&ldquo;${esc(I.quote)}&rdquo; <cite>${esc(I.quote_by)}</cite></blockquote>
+    ${I.paras.map((p) => `<p class="look"><b class="tag">${esc(p.tag)}:</b> ${esc(p.text)}</p>`).join("")}
+    <div class="card-nav">
+      <button type="button" class="btn" id="ask">&#128172; Ask Claude about this</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn primary" id="next">Start lesson 1 &rarr;</button>
+    </div>`;
+  document.getElementById("next").onclick = () => goLesson(0);
+  document.getElementById("ask").onclick = () => TeamChat.open();
+}
+
+// ---- lesson card -------------------------------------------------------------------------------
+function questionHtml(L, q, qi, many) {
+  const ans = answerOf(L, qi);
+  let html = `<div class="question" id="q${qi}">${many ? `<div class="qnum">Question ${qi + 1} of ${questionsOf(L).length}</div>` : ""}
+    <p class="prompt">${esc(q.prompt)}</p><div class="choices">` +
+    q.choices.map((c, k) => {
+      let cls = "", mark = "";
+      if (ans !== undefined) {
+        if (c.correct) { cls = "correct"; mark = "&#10003; right answer"; }
+        else if (k === ans) { cls = "wrong"; mark = "&#10007; your pick"; }
+      }
+      return `<button type="button" data-q="${qi}" data-k="${k}" class="${cls}" ${ans !== undefined ? "disabled" : ""}>
+        <span class="letter">${"ABC"[k]}</span><span>${esc(c.text)}</span>${mark ? `<span class="mark">${mark}</span>` : ""}</button>`;
+    }).join("") + `</div>`;
+  if (ans !== undefined) {
+    const pick = q.choices[ans], correct = q.choices.find((c) => c.correct), key = `${L.id}#${qi}`;
+    if (!S.praise[key]) S.praise[key] = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+    html += `<div class="feedback ${pick.correct ? "right" : "miss"}">
+      <span class="headline">${pick.correct ? S.praise[key] : "Not quite, here is what happened."}</span>
+      ${pick.correct ? "" : `<span class="whynot"><b>Why not &ldquo;${esc(pick.text)}&rdquo;?</b> ${esc(pick.why_not || "")}</span>`}
+      <span class="answer">The answer: <b>${esc(correct.text)}</b>.</span>${esc(q.explain)}</div>`;
+  } else {
+    html += `<p class="hint">Pick an answer. You will see the right one either way.</p>`;
+  }
+  return html + `</div>`;
+}
+
+// The chain of core ideas, lit up to the current lesson (shown in "Connect the dots").
+function chainHtml(L) {
+  if (L.bonus) return "";
+  const pos = core().indexOf(L);
+  return `<ol class="chain" aria-label="The chain of ideas so far">` + core().map((l, k) =>
+    `<li class="${k < pos ? "past" : k === pos ? "now" : ""}">${esc(l.link || l.title)}</li>`).join("") + `</ol>`;
+}
+
+function renderCard() {
+  const card = document.getElementById("card");
+  if (S.lesson === START) { renderIntro(card); return; }
+  const L = S.L.lessons[S.lesson], qs = questionsOf(L), steps = stepsOf(L), last = lastStep(L);
+  const kicker = L.bonus ? `${bonusName(L).replace(/^b/, "B")} &middot; <span class="opt">optional, if you have time</span>`
+    : `Lesson ${L.n} of ${core().length}${L.whatif ? ' &middot; <span class="opt">a what-if</span>' : ""}`;
+  const stepHtml = steps.map((s, k) => `<li ${k === S.step ? 'aria-current="step"' : ""} class="${k < S.step ? "past" : ""}">${k + 1}. ${s}</li>`).join("");
+  let body = "";
+  const shown = Math.min(S.step, qs.length);          // questions 1..shown are on the card
+  for (let qi = 0; qi < shown; qi++) body += questionHtml(L, qs[qi], qi, qs.length > 1);
+  if (S.step >= last) {
+    body += `<div class="why" style="margin-top:14px"><span class="label">Why it happens &middot; general science, not from this data</span>
+      <p>${esc(L.why)}</p>${L.comparison ? `<p class="comparison">${esc(L.comparison)}</p>` : ""}</div>`;
+    if (L.connect) body += `<div class="connect"><span class="label">Connect the dots</span>${chainHtml(L)}<p>${esc(L.connect)}</p></div>`;
+    if (L.care) body += `<div class="care"><span class="label">Why you'd care</span><p>${esc(L.care)}</p></div>`;
+  }
+  const isLast = S.lesson === S.L.lessons.length - 1;
+  const nextL = S.L.lessons[S.lesson + 1];
+  const nextLabel = S.step < last ? "Next &rarr;"
+    : isLast ? "Finished! Back to the start"
+    : nextL.bonus && !L.bonus ? "Bonus lessons (optional) &rarr;" : "Next lesson &rarr;";
+  const nextBlocked = S.step >= 1 && S.step <= qs.length && answerOf(L, S.step - 1) === undefined;
+  const coreDone = !L.bonus && S.step >= last && nextL && nextL.bonus
+    ? `<p class="hint done-note">That's the core finished. The bonus lessons are optional${bonusMinutes()}.</p>` : "";
+  card.innerHTML = `
+    <div class="kicker">${kicker}</div>
+    <h2>${esc(L.title)}</h2>
+    <ol class="steps" aria-label="Steps">${stepHtml}</ol>
+    <p class="look"><b class="tag">${L.whatif ? "The situation:" : "Look:"}</b>${esc(L.look)}</p>
+    <div class="visuals${L.visuals.length > 1 && L.visuals.every((v) => v.type === "profile") ? " pair" : ""}">${L.visuals.map((v, k) => visualHtml(v, k)).join("")}</div>
+    ${body}${coreDone}
+    <div class="card-nav">
+      <button type="button" class="btn" id="back">&larr; Back</button>
+      <button type="button" class="btn" id="ask">&#128172; Ask Claude about this</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn primary" id="next" ${nextBlocked ? "disabled" : ""}>${nextLabel}</button>
+    </div>`;
+  card.querySelectorAll(".choices button").forEach((b) => b.onclick = () => answer(+b.dataset.q, +b.dataset.k));
+  document.getElementById("back").onclick = back;
+  document.getElementById("next").onclick = next;
+  document.getElementById("ask").onclick = () => TeamChat.open();
+  drawVisuals(L);
+}
+
+function answer(qi, k) {
+  const L = S.L.lessons[S.lesson];
+  if (answerOf(L, qi) !== undefined) return;
+  S.answers[L.id] = Object.assign({}, S.answers[L.id], { [qi]: k });
+  renderCard();
+  const fb = document.querySelector(`#q${qi} .feedback`);
+  if (fb) fb.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function next() {
+  if (S.lesson === START) { goLesson(0); return; }
+  const L = S.L.lessons[S.lesson], last = lastStep(L);
+  if (S.step < last) {
+    S.step++;
+    if (S.step === last) { S.done.add(L.id); saveProgress(); renderList(); }
+    renderCard();
+    const target = document.querySelector(S.step === last ? "#card .why" : `#card #q${S.step - 1}`);
+    if (target) target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } else {
+    goLesson(S.lesson === S.L.lessons.length - 1 ? START : S.lesson + 1);
+  }
+}
+
+function back() {
+  if (S.step > 0) { S.step--; renderCard(); }
+  else if (S.lesson > 0) goLesson(S.lesson - 1, lastStep(S.L.lessons[S.lesson - 1]));
+  else if (S.lesson === 0) goLesson(START);
+}
+
+// ---- lesson visuals ----------------------------------------------------------------------------
+function visualHtml(v, k) {
+  const P = S.P;
+  if (v.type === "heat") {
+    const meta = P.params[v.param], view = P.views[v.view];
+    return `<div class="visual"><div class="vis-title">${v.note ? `<b class="note">${esc(v.note)}</b><br>` : ""}${esc(meta.label)}, ${esc(meta.units)}${meta.log ? " (log scale)" : ""}
+        &middot; ${esc(view.label)} &middot; surface at the top</div>
+      <canvas class="heat" id="v${k}" aria-label="${esc(meta.label)} by depth and time"></canvas>
+      <div class="readout" id="v${k}-read"></div>
+      <div class="key"><span>${esc(fmtVal(view.params[v.param].domain[0], meta))}</span>
+        <span class="ramp" style="background:linear-gradient(90deg, ${PROFILE_RAMP.join(",")})"></span>
+        <span>${esc(fmtVal(view.params[v.param].domain[1], meta))}</span><span class="gap"></span><span>no reading</span></div></div>`;
+  }
+  if (v.type === "strip") {
+    const title = v.which === "gage"
+      ? "River gage above the reservoir: how muddy (turbidity), FNU, log scale"
+      : "Foothills water plant: organic carbon (TOC) in the arriving water, mg/L, daily lab value";
+    return `<div class="visual"><div class="vis-title">${title}</div><canvas class="strip" id="v${k}"></canvas></div>`;
+  }
+  const items = v.series.map((s) => `<span><span class="sw" style="background:${s.color}"></span>${esc(s.name)}</span>`);
+  if (v.ref) items.push(`<span><span class="sw dash"></span>${esc(v.ref.label)}</span>`);
+  const legend = items.length > 1 ? `<div class="legend">${items.join("")}</div>` : "";
+  const kind = v.type === "profile" ? "profile" : "line";
+  const title = kind === "profile" ? `${esc(v.title)}, ${esc(v.units)} &middot; surface at the top` : `${esc(v.title)}, ${esc(v.units)}`;
+  return `<div class="visual"><div class="vis-title">${title}</div>${legend}
+    <canvas class="${kind}" id="v${k}" aria-label="${esc(v.title)}"></canvas><div class="readout" id="v${k}-read"></div></div>`;
+}
+
+function drawVisuals(L) {
+  const P = S.P;
+  // strips follow the storm view's time axis, so they line up with a storm heatmap on the same card
+  L.visuals.forEach((v, k) => {
+    const c = document.getElementById("v" + k);
+    if (!c) return;
+    if (v.type === "heat") {
+      const read = document.getElementById(`v${k}-read`), meta = P.params[v.param];
+      const idle = "Move over the picture (or tap it) to read a value." +
+        (v.view === "storm" ? " Yellow dashed line: river gage peak." : "") + " Dotted lines: sensor serviced.";
+      const geo = drawHeat(c, P, v.view, v.param, { highlight: v.highlight, points: v.points });
+      read.textContent = idle;
+      const move = (e) => {
+        const r = c.getBoundingClientRect(), cell = geo.pick(e.clientX - r.left, e.clientY - r.top);
+        if (!cell) { read.textContent = idle; return; }
+        const val = geo.view.params[v.param].values[cell.i * geo.nZ + cell.j];
+        read.innerHTML = `<b>${fmtWhen(profileTime(geo.view, cell.i), true)}</b> &middot; ${P.depths[cell.j]} m deep &middot; <b>${esc(fmtVal(val, meta))}</b>`;
+        S.hover = `${meta.label}: ${read.textContent}`;
+      };
+      c.onpointermove = move; c.onpointerdown = move;
+      c.onpointerleave = () => { read.textContent = idle; };
+    } else if (v.type === "strip") {
+      const { X, t0, t1 } = viewX(P.views.storm, c.clientWidth);
+      const st = (v.which === "gage" ? drawGageStrip : drawTocStrip)(c, P, X);
+      if (v.which === "toc") { st.g.font = "10px -apple-system, sans-serif"; timeAxis(st.g, X, t0, t1, st.h, true); }
+    } else if (v.type === "profile") {
+      const read = document.getElementById(`v${k}-read`);
+      const idle = "Move over the chart (or tap it) to read the values at a depth.";
+      let chart = drawProfileChart(c, v);
+      read.textContent = idle;
+      const move = (e) => {
+        const r = c.getBoundingClientRect(), i = chart.nearest(e.clientY - r.top);
+        chart = drawProfileChart(c, v, i);
+        read.innerHTML = `<b>${v.depths[i]} m deep</b> &middot; ` + v.series.map((s) =>
+          `${esc(s.name)}: <b>${s.values[i] === null ? "no reading" : s.values[i] + " " + esc(v.units)}</b>`).join(" &middot; ") +
+          (v.ref ? ` &middot; ${esc(v.ref.label)}: <b>${v.ref.value} ${esc(v.units)}</b>` : "");
+        S.hover = `${v.title}: ${read.textContent}`;
+      };
+      c.onpointermove = move; c.onpointerdown = move;
+      c.onpointerleave = () => { chart = drawProfileChart(c, v); read.textContent = idle; };
+    } else {
+      const read = document.getElementById(`v${k}-read`);
+      const idle = "Move over the chart (or tap it) to read the values.";
+      let chart = drawLineChart(c, v);
+      read.textContent = idle;
+      const move = (e) => {
+        const r = c.getBoundingClientRect(), i = chart.nearest(e.clientX - r.left);
+        chart = drawLineChart(c, v, i);
+        const d = new Date(v.x[i] + "T12:00:00");
+        read.innerHTML = `<b>${fmtWhen(d, false)}</b> &middot; ` + v.series.map((s) =>
+          `${esc(s.name)}: <b>${s.values[i] === null ? "no reading" : s.values[i] + " " + esc(v.units)}</b>`).join(" &middot; ");
+        S.hover = `${v.title}: ${read.textContent}`;
+      };
+      c.onpointermove = move; c.onpointerdown = move;
+      c.onpointerleave = () => { chart = drawLineChart(c, v); read.textContent = idle; };
+    }
+  });
+}
+
+// ---- Explore: stacked heatmaps with a linked crosshair -----------------------------------------
+function renderExplore() {
+  const P = S.P, storm = S.view === "storm";
+  document.querySelectorAll("#explore-controls .seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === S.view));
+  const strip = (id, title) => `<div class="x-panel"><div class="vis-title">${title}</div>
+    <div class="stack"><canvas class="strip" id="${id}"></canvas><canvas class="overlay" id="${id}-o"></canvas></div></div>`;
+  let html = storm ? strip("x-gage", "River gage above the reservoir: turbidity, FNU (log scale)") : "";
+  html += EXPLORE_PARAMS.map((key) => {
+    const meta = P.params[key], dom = P.views[S.view].params[key].domain;
+    return `<div class="x-panel"><div class="vis-title">${esc(meta.label)}, ${esc(meta.units)}${meta.log ? " (log scale)" : ""}</div>
+      <div class="stack"><canvas class="heat" id="x-${key}"></canvas><canvas class="overlay" id="x-${key}-o"></canvas></div>
+      <div class="key"><span>${esc(fmtVal(dom[0], meta))}</span><span class="ramp" style="background:linear-gradient(90deg, ${PROFILE_RAMP.join(",")})"></span>
+        <span>${esc(fmtVal(dom[1], meta))}</span><span class="gap"></span><span>no reading</span></div></div>`;
+  }).join("");
+  html += storm ? strip("x-toc", "Foothills plant: organic carbon (TOC) in arriving water, mg/L, daily lab value") : "";
+  document.getElementById("x-panels").innerHTML = html;
+  drawExplore();
+}
+
+function drawExplore() {
+  const P = S.P, storm = S.view === "storm";
+  const geos = {};
+  for (const key of EXPLORE_PARAMS) geos[key] = drawHeat(document.getElementById("x-" + key), P, S.view, key);
+  const any = geos[EXPLORE_PARAMS[0]];
+  if (storm) {
+    drawGageStrip(document.getElementById("x-gage"), P, any.X);
+    drawTocStrip(document.getElementById("x-toc"), P, any.X);
+  }
+  const read = document.getElementById("x-read");
+  // Same shape as the hover readout, with invisible values as wide as real ones, so the pictures never move.
+  const idle = `<span style="color:var(--panel-ink-2)">Move over or tap a picture to read it here.</span><div class="vals">${
+    EXPLORE_PARAMS.map((key) => { const meta = P.params[key]; return `<span style="color:var(--panel-ink-2)">${esc(meta.label)}: <b style="visibility:hidden">${esc(fmtVal(P.views[S.view].params[key].domain[1], meta))}</b></span>`; }).join("")}</div>`;
+  read.innerHTML = idle;
+  const overlays = [...document.querySelectorAll("#x-panels canvas.overlay")];
+  const clear = () => overlays.forEach((o) => sizeCanvas(o));
+  const show = (cell) => {
+    const view = P.views[S.view];
+    const x = PROF_PAD.left + (cell.i + 0.5) / any.nT * any.pw;
+    const y = PROF_PAD.top + (cell.j + 0.5) / any.nZ * any.ph;
+    for (const o of overlays) {
+      const { g, h } = sizeCanvas(o);
+      const isHeat = !o.id.startsWith("x-gage") && !o.id.startsWith("x-toc");
+      g.strokeStyle = "rgba(255,255,255,0.9)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, isHeat ? PROF_PAD.top : 4); g.lineTo(x, isHeat ? PROF_PAD.top + any.ph : h - 12); g.stroke();
+      if (isHeat) {
+        g.strokeStyle = "rgba(255,255,255,0.55)";
+        g.beginPath(); g.moveTo(PROF_PAD.left, y); g.lineTo(PROF_PAD.left + any.pw, y); g.stroke();
+        g.beginPath(); g.arc(x, y, 5, 0, 7); g.lineWidth = 3; g.strokeStyle = "#101418"; g.stroke();
+        g.beginPath(); g.arc(x, y, 5, 0, 7); g.lineWidth = 1.5; g.strokeStyle = "#ffffff"; g.stroke();
+      }
+    }
+    const vals = EXPLORE_PARAMS.map((key) => {
+      const meta = P.params[key], v = view.params[key].values[cell.i * any.nZ + cell.j];
+      return `<span>${esc(meta.label)}: <b>${esc(fmtVal(v, meta))}</b></span>`;
+    });
+    read.innerHTML = `<b>${fmtWhen(profileTime(view, cell.i), true)}</b> &middot; <b>${P.depths[cell.j]} m</b> deep<div class="vals">${vals.join("")}</div>`;
+    S.hover = `Explore, ${view.label}: ${read.textContent.replace(/\s+/g, " ")}`;
+  };
+  clear();
+  for (const key of EXPLORE_PARAMS) {
+    const c = document.getElementById("x-" + key), geo = geos[key];
+    const move = (e) => {
+      const r = c.getBoundingClientRect(), cell = geo.pick(e.clientX - r.left, e.clientY - r.top);
+      if (cell) show(cell); else { clear(); read.innerHTML = idle; }
+    };
+    c.onpointermove = move; c.onpointerdown = move;
+    c.onpointerleave = () => { clear(); read.innerHTML = idle; };
+  }
+}
+
+// ---- modes, chat, start ------------------------------------------------------------------------
+function setMode(mode) {
+  S.mode = mode;
+  document.querySelectorAll("header .seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === mode));
+  document.getElementById("lessons").hidden = mode !== "lessons";
+  document.getElementById("explore").hidden = mode !== "explore";
+  document.getElementById("dashboard").hidden = mode !== "dashboard";
+  try { history.replaceState(null, "", mode === "explore" ? "#explore" : mode === "dashboard" ? "#dashboard" : "#lessons"); } catch (err) { /* ignore */ }
+  if (mode === "explore") renderExplore();
+  else if (mode === "dashboard") renderDashboard();
+  else renderCard();
+  TeamChat.refresh();
+}
+
+// Lazy-load the dashboard iframe only on first visit to the tab.
+function renderDashboard() {
+  const frame = document.getElementById("dashboard-frame");
+  if (!frame.src) frame.src = "prediction-dashboard.html?embedded=1";
+}
+
+function chatContext() {
+  const bits = ["the viewer is on the pop-out page 'Strontia Springs, by depth', written for ages 13 to 16"];
+  if (S.mode === "lessons" && S.L && S.lesson === START) {
+    bits.push(`they are on the opening screen "Start here" (river, Strontia Springs Reservoir, Foothills plant, taps; what the sonde is; why layers matter)`);
+  } else if (S.mode === "lessons" && S.L) {
+    const L = S.L.lessons[S.lesson], qs = questionsOf(L), steps = stepsOf(L);
+    bits.push(`they are on ${L.whatif ? `the "Put it all together" what-if (${lessonName(L)})` : lessonName(L)}, "${L.title}", step "${steps[S.step]}"`);
+    const qi = Math.max(0, Math.min(qs.length, S.step) - 1), q = qs[qi], ans = answerOf(L, qi);
+    bits.push(`the ${qs.length > 1 ? `question ${qi + 1} of ${qs.length}` : "question"} asks: "${q.prompt}" (answer: ${q.choices.find((c) => c.correct).text})`);
+    if (ans !== undefined) bits.push(`they answered "${q.choices[ans].text}" (${q.choices[ans].correct ? "right" : "not right"})`);
+  } else if (S.P) {
+    bits.push(`they are in Explore mode on the ${S.view === "storm" ? "Aug 10-19 storm window" : "whole season"}, showing temperature, dissolved oxygen (mg/L and % saturation), turbidity and specific conductance by depth and time`);
+  } else if (S.mode === "dashboard") {
+    bits.push("they are on the Dashboard tab, the Foothills TOC/alkalinity prediction dashboard");
+  }
+  if (S.hover) bits.push(`they last pointed at ${S.hover}`);
+  return bits.join("; ");
+}
+
+const KID_QUESTIONS = {
+  picture: [
+    "How do I read the depth picture?",
+    "What do the grey striped parts mean?",
+    "What is a sonde, and how does it measure the lake?",
+  ],
+  layers: [
+    "Why does warm water float on top of cold water?",
+    "What does 'stratified' mean?",
+    "What is a thermocline?",
+  ],
+  oxygen: [
+    "Why does warm water hold less oxygen?",
+    "Why is there less oxygen near the bottom?",
+    "Did the deep water ever run out of oxygen?",
+  ],
+  storm: [
+    "Where did the storm's mud go in the reservoir?",
+    "Why did the muddy water stay in the middle?",
+    "What is turbidity?",
+    "Why did the muddy layer sink over a few days?",
+    "What would happen if a storm came in colder than all the lake water?",
+  ],
+  plant: [
+    "What is organic carbon, and why does the water plant care?",
+    "Why does it matter how deep the plant's intake is?",
+    "Why can't we be sure the storm caused the jump at the plant?",
+    "How does water get from the river to my tap?",
+  ],
+  science: [
+    "What is the difference between measured and interpreted?",
+    "How did the team spot that the sensor was cleaned?",
+    "Why does warm water let electricity through more easily?",
+    "Why do scientists say 'probably' instead of 'definitely'?",
+  ],
+};
+
+async function start() {
+  TeamChat.mount({
+    questions: KID_QUESTIONS,
+    context: chatContext,
+    audience: "young",
+    title: "Ask about the reservoir",
+    openLabel: "&#128172; Ask a question",
+    placeholder: "Ask anything about the lake, the storm, or a word&hellip;",
+    fine: "Answered by Claude through your local Claude Code, from this team's findings. It can be wrong. Readings are provisional.",
+    intro: () => {
+      const L = S.mode === "lessons" && S.L && S.lesson !== START ? S.L.lessons[S.lesson] : null;
+      return `<p>Hi! Ask me anything about this reservoir${L ? `, or about the lesson <b>${esc(L.title)}</b>` : ""}.
+        There are no silly questions. Not sure where to start? Try one of these.</p>`;
+    },
+  });
+  try {
+    const [p, l] = await Promise.all([fetch("strontia-profile.json"), fetch("strontia-lessons.json")]);
+    if (!p.ok) throw new Error("strontia-profile.json -> " + p.status);
+    if (!l.ok) throw new Error("strontia-lessons.json -> " + l.status);
+    S.P = await p.json(); S.L = await l.json();
+  } catch (err) {
+    document.getElementById("card").innerHTML = `<p class="look">The data did not load (${esc(err.message)}).
+      Serve the repository (python3 teams/team-education/chat_server.py) and open this page through it.</p>`;
+    return;
+  }
+  document.getElementById("sub").textContent = `Inside a Denver Water reservoir, top to bottom, ${S.P.views.season.label}.`;
+  document.getElementById("terms").textContent = S.L.terms;
+  loadProgress();
+  renderList();
+  document.getElementById("reset-progress").onclick = resetProgress;
+  document.querySelectorAll("header .seg button").forEach((b) => b.onclick = () => setMode(b.dataset.mode));
+  document.querySelectorAll("#explore-controls .seg button").forEach((b) => b.onclick = () => { S.view = b.dataset.view; renderExplore(); });
+  setMode(location.hash === "#explore" ? "explore" : location.hash === "#dashboard" ? "dashboard" : "lessons");
+  let timer = null, lastW = window.innerWidth;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastW) return;            // ignore phone toolbar height changes
+    lastW = window.innerWidth;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (S.mode === "explore") drawExplore();
+      else if (S.mode === "lessons") renderCard();
+    }, 120);
+  });
+}
+
+start();
+</script>
+</body>
+</html>

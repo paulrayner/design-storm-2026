@@ -1,0 +1,21 @@
+n	score	kept	description
+0	0.26904	yes	baseline: Phase 2 method (linear in depth within cast, linear in time between covering casts)
+1	0.26948	no	turbidity interpolated in log10 space (depth and time)
+2	0.26868	no	chl: nearest cast instead of blending when bracketing casts straddle a segment change (gain <0.002, simpler kept)
+3	0.26551	yes	running median (5 readings) down each cast for turbidity and chlorophyll before interpolating
+4	0.26669	no	running-median window 9 instead of 5 (chl better, turb worse)
+5	0.26596	no	Gaussian time kernel (sigma 6 h, all casts) for turb and chl instead of linear bracketing
+6	0.26104	yes	remove a fitted 24-h harmonic (per 1-m depth bin, vs 1-day running mean) before time interpolation, add back at query hour
+7	0.26121	no	add 12-h harmonic to the diurnal cycle fit
+8	0.26134	no	use each reading's own time (interpolated down the cast) instead of cast mid-time
+9	0.26031	yes	chl running-median window 9 (turb stays 5); same complexity, lower score
+10	0.26032	no	turbidity in log10 throughout (cycle fit + interpolation); equal score, simpler kept
+11	0.25990	no	local PCHIP in time over 2 casts each side (turb/chl better, temp/cond worse; gain <0.002 for more complexity)
+12	0.25982	no	seasonally varying diurnal harmonic (refit every 3 d, sigma 10 d); gain <0.002 for more complexity
+13	0.26053	no	running median 5 for ODO too
+14	0.26086	no	turbidity running-median window 3 (fifth non-improvement in a row: stop)
+15	0.26098	yes	physics fix after stop: clip temperature to the range of the two bracketing casts (exp 9 put 19% of temp predictions up to 0.39 C outside it via the diurnal term; program.md rules that out). Score cost +0.0007; kept as best compliant version
+# baseline dev score 0.26904 (exp 0); best dev score 0.26098 (exp 15, -3.0%); best unconstrained 0.26031 (exp 9, rejected: temp outside bracketing casts)
+# best method: per-cast profiles linear in depth (running median down the cast: 5 readings turbidity, 9 chlorophyll), linear in time between the two nearest casts covering the depth,
+# after removing a 24-h harmonic fitted per 1-m depth bin (readings minus a ~1-day Gaussian running mean) and adding it back at the query hour; temperature clipped to the bracketing casts.
+# no step beat the best by >30%, so no leakage stop was triggered; predict() reads only its train argument. Train-only screening (hiding train casts) suggested log10 turbidity helps (turb 0.319->0.285) but dev was flat (exp 10).

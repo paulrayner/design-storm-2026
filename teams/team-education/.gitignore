@@ -1,0 +1,4 @@
+.venv/
+analysis/out/
+__pycache__/
+autoresearch/data/

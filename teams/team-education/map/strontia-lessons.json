@@ -1,0 +1,2944 @@
+{
+ "title": "Strontia Springs, by depth: lessons",
+ "generated_by": "teams/team-education/analysis/build_lessons.py",
+ "audience": "ages 13 to 16",
+ "terms": "Sonde readings and Foothills lab values: Denver Water, provisional and subject to change, provided \"as is\" with no warranty of any kind; not QA/QC reviewed. Copyright 2026, Denver Water. Any sale, reproduction or distribution of this information, or products derived therefrom, in any format is expressly prohibited. Full terms: data/TERMS.md. Gage readings: USGS 06707525, provisional (flag P), public domain.",
+ "intro": {
+  "title": "Start here: from the river to your tap",
+  "chain": [
+   {
+    "label": "River",
+    "text": "Rain and melting snow flow down the South Platte River."
+   },
+   {
+    "label": "Strontia Springs Reservoir",
+    "text": "A lake behind a dam, southwest of Denver."
+   },
+   {
+    "label": "Foothills treatment plant",
+    "text": "An intake and a tunnel carry lake water here to be cleaned."
+   },
+   {
+    "label": "Denver's taps",
+    "text": "The clean water goes out to homes."
+   }
+  ],
+  "quote": "Eighty percent of Denver Water's supply passes through Strontia Springs Reservoir.",
+  "quote_by": "Denver Water",
+  "paras": [
+   {
+    "tag": "The water scan",
+    "text": "A sensor called a sonde rises from deep in the lake to the surface about every 6 hours. It measures temperature, oxygen, mud and more as it goes, and the team turned its readings into pictures."
+   },
+   {
+    "tag": "Why layers matter",
+    "text": "In summer the lake forms layers that barely mix. A storm's mud can slide into one layer and stay there. Whether it reaches the plant depends on how deep the plant's intake is."
+   },
+   {
+    "tag": "What you'll do",
+    "text": "9 short lessons that link into one chain, then a puzzle where you put it all together. That takes about 26 minutes. The two bonus lessons at the end are optional."
+   }
+  ],
+  "minutes_core": 26,
+  "minutes_bonus": 6,
+  "numbers": [
+   {
+    "text": "Eighty percent",
+    "source": "strontia-brief/places.json (Denver Water, quoted)"
+   },
+   {
+    "text": "6",
+    "source": "casts.csv: median gap between full casts, hours"
+   },
+   {
+    "text": "9",
+    "source": "count of core lessons in this file"
+   },
+   {
+    "text": "two",
+    "source": "count of bonus lessons in this file"
+   },
+   {
+    "text": "26",
+    "source": "reading-time estimate (words / 150 per minute + 20 s per question): opening + core + put it together"
+   },
+   {
+    "text": "6",
+    "source": "reading-time estimate: bonus lessons (shown in the lesson list)"
+   }
+  ]
+ },
+ "lessons": [
+  {
+   "id": "read",
+   "title": "How to read the water scan",
+   "look": "This picture is like a scan of the reservoir. The top edge is the surface. The bottom edge is 44 m deep. Time runs from left to right, from Apr 7 to Aug 19. The colour shows the water temperature.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "season",
+     "param": "temp_c"
+    }
+   ],
+   "question": {
+    "prompt": "Pick one thin up-and-down stripe of colour in the picture. What does it show?",
+    "choices": [
+     {
+      "text": "One sweep of the sonde: the temperature at every depth, at one moment",
+      "correct": true
+     },
+     {
+      "text": "The temperature across the lake, from one shore to the other",
+      "correct": false,
+      "why_not": "It looks a bit like a map, but the sonde only moves up and down in one spot. Left to right is time, not distance."
+     },
+     {
+      "text": "One depth, followed through the whole season",
+      "correct": false,
+      "why_not": "That would be a sideways row. A row follows one depth through time; an up-and-down stripe is one moment at every depth."
+     }
+    ],
+    "explain": "The sonde rises from deep down to the surface about every 6 hours, measuring as it goes. Each sweep becomes one thin stripe. On the key, dark navy is about 5.4 °C and near-white about 19.1 °C. Grey stripes mean no reading."
+   },
+   "why": "Scientists turn numbers into colours so the eye can spot patterns fast. Always check the key: the same colour means something different on every picture.",
+   "comparison": "Comparison: it is like a weather map, but sliced straight down through the water instead of across the land.",
+   "link": "Read the scan",
+   "connect": "This picture comes back in most lessons. Next: why the light (warm) colours sit on top.",
+   "care": "The lake looks the same from the shore every day. This scan is how people can see what is happening deep down, where nobody can look.",
+   "n": 1,
+   "numbers": [
+    {
+     "text": "44",
+     "source": "map/strontia-profile.json (build_profile_json.py) depths, deepest row"
+    },
+    {
+     "text": "Apr 7",
+     "source": "map/strontia-profile.json (build_profile_json.py) season view start"
+    },
+    {
+     "text": "Aug 19",
+     "source": "map/strontia-profile.json (build_profile_json.py) season view end"
+    },
+    {
+     "text": "6",
+     "source": "casts.csv: median gap between full casts, hours"
+    },
+    {
+     "text": "5.4",
+     "source": "map/strontia-profile.json (build_profile_json.py) season temp_c colour-key low (1st percentile)"
+    },
+    {
+     "text": "19.1",
+     "source": "map/strontia-profile.json (build_profile_json.py) season temp_c colour-key high (99th percentile)"
+    }
+   ]
+  },
+  {
+   "id": "floats",
+   "title": "Warm water floats",
+   "look": "Look at the box: the top few metres in July. Compare its colour with the colours lower down.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "season",
+     "param": "temp_c",
+     "highlight": {
+      "t0": "2026-07-01T00:00:00",
+      "t1": "2026-08-01T00:00:00",
+      "z0": 1,
+      "z1": 3.0,
+      "label": "July, top 3 m"
+     }
+    }
+   ],
+   "question": {
+    "prompt": "The warm (light) water stays in a band at the top, month after month. Why doesn't it mix down and even out the lake?",
+    "choices": [
+     {
+      "text": "Warm water is lighter than cold water, so it floats on top",
+      "correct": true
+     },
+     {
+      "text": "The sun only heats the top, and heat can't travel down through water",
+      "correct": false,
+      "why_not": "The sun does heat the top, but wind and waves stir water. They would carry the heat down if all the water weighed the same. Warm water is lighter, so it stays up."
+     },
+     {
+      "text": "Cold springs at the bottom keep the deep water cold",
+      "correct": false,
+      "why_not": "Good guess from the name! But lakes with no springs at all also get a warm top and a cold bottom in summer. The reason that works everywhere: warm water floats."
+     }
+    ],
+    "explain": "In July, the top 3 m was usually 18.4 °C, and deeper than 40 m only 14.6 °C. The biggest gap on one day was 7.6 °C, on May 15. Even on the first day of data, Apr 7, the top was 5.3 °C warmer, and the lake stayed layered until the data ends."
+   },
+   "why": "Warm water is lighter than cold water (scientists say less dense), so it floats on top like a lid. A lake with warm water on top of cold water is called stratified: layered.",
+   "comparison": "Comparison: in a pool on a sunny day, the water at the surface feels warmer than the water at your feet.",
+   "link": "Warm floats",
+   "connect": "Lesson 1: light means warm. So the light band on top is a warm layer, floating like a lid on the cold water.",
+   "care": "These layers decide where anything flowing into the lake ends up, including a storm's mud. You'll need this idea again and again.",
+   "n": 2,
+   "numbers": [
+    {
+     "text": "July",
+     "source": "sonde_clean.csv: month with the highest top-3 m median temperature"
+    },
+    {
+     "text": "July",
+     "source": "sonde_clean.csv: warmest month"
+    },
+    {
+     "text": "3",
+     "source": "top band definition, m"
+    },
+    {
+     "text": "18.4",
+     "source": "sonde_clean.csv full casts, monthly median of readings, depth <= 3 m"
+    },
+    {
+     "text": "40",
+     "source": "deep band definition, m"
+    },
+    {
+     "text": "14.6",
+     "source": "sonde_clean.csv full casts, monthly median of readings, depth >= 40 m"
+    },
+    {
+     "text": "7.6",
+     "source": "storm_numbers.json season.dt_max"
+    },
+    {
+     "text": "May 15",
+     "source": "storm_numbers.json season.dt_max_day"
+    },
+    {
+     "text": "Apr 7",
+     "source": "storm_numbers.json season.dt_first_observed_day"
+    },
+    {
+     "text": "5.3",
+     "source": "storm_numbers.json season.dt_first_observed_day"
+    }
+   ]
+  },
+  {
+   "id": "oxygen",
+   "title": "Warm water holds less oxygen",
+   "look": "These three charts show the top few metres of the reservoir, day by day: how warm it was, how much oxygen was in it, and how full of oxygen it was compared with the most it could hold. Follow each line from left to right.",
+   "visuals": [
+    {
+     "type": "line",
+     "title": "Top 3 m: temperature (daily middle value)",
+     "units": "°C",
+     "x": [
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-11",
+      "2026-04-12",
+      "2026-04-13",
+      "2026-04-14",
+      "2026-04-15",
+      "2026-04-16",
+      "2026-04-17",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-02",
+      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-09",
+      "2026-05-10",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+      "2026-05-18",
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-23",
+      "2026-05-24",
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-28",
+      "2026-05-29",
+      "2026-05-30",
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-06",
+      "2026-06-07",
+      "2026-06-08",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-13",
+      "2026-06-14",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-06-28",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+      "2026-07-05",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16",
+      "2026-07-17",
+      "2026-07-18",
+      "2026-07-19",
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-07-31",
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12",
+      "2026-08-13",
+      "2026-08-14",
+      "2026-08-15",
+      "2026-08-16",
+      "2026-08-17",
+      "2026-08-18",
+      "2026-08-19"
+     ],
+     "series": [
+      {
+       "name": "temperature",
+       "color": "#3987e5",
+       "values": [
+        10.1,
+        9.7,
+        9.7,
+        9.8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        10.8,
+        10.8,
+        10.6,
+        10.3,
+        10.3,
+        null,
+        10.6,
+        10.6,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        15.0,
+        15.1,
+        null,
+        null,
+        12.7,
+        12.1,
+        11.9,
+        11.8,
+        11.9,
+        12.7,
+        13.5,
+        14.0,
+        14.5,
+        14.5,
+        14.6,
+        15.2,
+        15.7,
+        15.7,
+        15.7,
+        16.1,
+        16.2,
+        15.8,
+        15.9,
+        16.1,
+        16.2,
+        16.1,
+        16.5,
+        16.6,
+        17.0,
+        16.9,
+        17.0,
+        16.1,
+        16.2,
+        16.5,
+        16.9,
+        17.2,
+        17.8,
+        17.5,
+        17.1,
+        16.8,
+        16.9,
+        17.4,
+        17.6,
+        17.7,
+        17.9,
+        18.0,
+        18.1,
+        18.3,
+        18.0,
+        17.6,
+        17.5,
+        17.3,
+        17.2,
+        17.1,
+        17.0,
+        17.1,
+        17.1,
+        null,
+        null,
+        null,
+        18.4,
+        18.9,
+        19.3,
+        19.7,
+        19.6,
+        19.3,
+        19.3,
+        19.1,
+        19.6,
+        19.8,
+        19.8,
+        19.9,
+        20.0,
+        18.2,
+        20.2,
+        20.2,
+        19.8,
+        19.4,
+        19.1,
+        19.3,
+        19.4,
+        19.2,
+        18.4,
+        18.2,
+        18.3,
+        18.0,
+        17.7,
+        17.2,
+        17.0,
+        16.9,
+        17.2,
+        17.3,
+        17.7,
+        18.1,
+        18.3,
+        18.4,
+        18.6,
+        18.4
+       ]
+      }
+     ]
+    },
+    {
+     "type": "line",
+     "title": "Top 3 m: oxygen in the water (daily middle value)",
+     "units": "mg/L",
+     "x": [
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-11",
+      "2026-04-12",
+      "2026-04-13",
+      "2026-04-14",
+      "2026-04-15",
+      "2026-04-16",
+      "2026-04-17",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-02",
+      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-09",
+      "2026-05-10",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+      "2026-05-18",
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-23",
+      "2026-05-24",
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-28",
+      "2026-05-29",
+      "2026-05-30",
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-06",
+      "2026-06-07",
+      "2026-06-08",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-13",
+      "2026-06-14",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-06-28",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+      "2026-07-05",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16",
+      "2026-07-17",
+      "2026-07-18",
+      "2026-07-19",
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-07-31",
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12",
+      "2026-08-13",
+      "2026-08-14",
+      "2026-08-15",
+      "2026-08-16",
+      "2026-08-17",
+      "2026-08-18",
+      "2026-08-19"
+     ],
+     "series": [
+      {
+       "name": "oxygen",
+       "color": "#3987e5",
+       "values": [
+        9.3,
+        9.28,
+        9.33,
+        9.38,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        9.0,
+        9.04,
+        9.04,
+        9.09,
+        9.15,
+        null,
+        8.9,
+        8.77,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        8.37,
+        8.44,
+        null,
+        null,
+        8.25,
+        8.35,
+        8.42,
+        8.47,
+        8.5,
+        8.51,
+        8.5,
+        8.48,
+        8.49,
+        8.47,
+        8.48,
+        8.34,
+        8.3,
+        8.27,
+        8.27,
+        8.24,
+        8.2,
+        8.18,
+        8.19,
+        8.18,
+        8.16,
+        8.16,
+        8.16,
+        8.14,
+        8.14,
+        8.12,
+        8.1,
+        8.2,
+        8.2,
+        7.89,
+        7.9,
+        7.86,
+        7.79,
+        7.76,
+        7.81,
+        7.8,
+        7.83,
+        7.79,
+        7.75,
+        7.7,
+        7.66,
+        7.63,
+        7.61,
+        7.59,
+        7.58,
+        7.61,
+        7.58,
+        7.6,
+        7.62,
+        7.62,
+        7.63,
+        7.64,
+        7.62,
+        null,
+        null,
+        null,
+        7.58,
+        7.53,
+        7.51,
+        7.45,
+        7.4,
+        7.37,
+        7.36,
+        7.69,
+        7.61,
+        7.62,
+        7.6,
+        7.58,
+        7.54,
+        7.71,
+        7.58,
+        7.56,
+        7.56,
+        7.6,
+        7.64,
+        7.67,
+        7.67,
+        7.63,
+        7.68,
+        7.72,
+        7.71,
+        7.72,
+        7.75,
+        7.77,
+        7.72,
+        7.7,
+        7.73,
+        7.75,
+        7.72,
+        7.72,
+        7.71,
+        7.7,
+        7.59,
+        7.61
+       ]
+      }
+     ]
+    },
+    {
+     "type": "line",
+     "title": "Top 3 m: how full of oxygen, % of the most it could hold (axis fixed from 50% to 100%)",
+     "units": "%",
+     "x": [
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-11",
+      "2026-04-12",
+      "2026-04-13",
+      "2026-04-14",
+      "2026-04-15",
+      "2026-04-16",
+      "2026-04-17",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-02",
+      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-09",
+      "2026-05-10",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+      "2026-05-18",
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-23",
+      "2026-05-24",
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-28",
+      "2026-05-29",
+      "2026-05-30",
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-06",
+      "2026-06-07",
+      "2026-06-08",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-13",
+      "2026-06-14",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-06-28",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+      "2026-07-05",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16",
+      "2026-07-17",
+      "2026-07-18",
+      "2026-07-19",
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-07-31",
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12",
+      "2026-08-13",
+      "2026-08-14",
+      "2026-08-15",
+      "2026-08-16",
+      "2026-08-17",
+      "2026-08-18",
+      "2026-08-19"
+     ],
+     "series": [
+      {
+       "name": "oxygen, % full",
+       "color": "#3987e5",
+       "values": [
+        82.6,
+        81.9,
+        82.1,
+        82.7,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        81.3,
+        81.6,
+        81.0,
+        81.1,
+        81.8,
+        null,
+        80.0,
+        78.8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        83.3,
+        84.2,
+        null,
+        null,
+        78.1,
+        77.9,
+        78.0,
+        78.3,
+        78.6,
+        80.3,
+        81.8,
+        82.3,
+        83.3,
+        83.1,
+        83.5,
+        83.7,
+        83.8,
+        83.4,
+        83.4,
+        83.8,
+        83.6,
+        82.9,
+        82.8,
+        83.4,
+        83.0,
+        83.1,
+        83.7,
+        83.8,
+        84.5,
+        84.1,
+        84.1,
+        83.8,
+        83.5,
+        81.1,
+        81.8,
+        81.6,
+        82.0,
+        81.6,
+        81.2,
+        80.4,
+        80.9,
+        81.5,
+        81.4,
+        80.9,
+        80.8,
+        80.8,
+        80.7,
+        80.7,
+        80.5,
+        79.6,
+        79.7,
+        79.4,
+        79.4,
+        79.3,
+        79.1,
+        79.3,
+        79.4,
+        null,
+        null,
+        null,
+        80.8,
+        81.2,
+        81.5,
+        81.5,
+        80.9,
+        80.0,
+        79.9,
+        82.6,
+        82.8,
+        83.3,
+        83.0,
+        82.8,
+        83.0,
+        83.5,
+        83.5,
+        83.6,
+        83.1,
+        82.6,
+        82.7,
+        82.8,
+        83.2,
+        82.6,
+        82.0,
+        81.9,
+        81.9,
+        82.1,
+        81.7,
+        80.5,
+        80.0,
+        79.5,
+        80.5,
+        80.9,
+        81.1,
+        81.7,
+        82.0,
+        82.0,
+        81.3,
+        81.2
+       ]
+      }
+     ],
+     "y": [
+      50,
+      100
+     ],
+     "y_suffix": "%"
+    }
+   ],
+   "question": {
+    "prompt": "From April to July the top water warmed up and its oxygen (mg/L) went down. But the \"% full\" chart hardly moved. What is the best explanation?",
+    "choices": [
+     {
+      "text": "Fish and other living things used up the oxygen",
+      "correct": false,
+      "why_not": "If living things used oxygen faster than the air put it back, the water would get less full, and the \"% full\" line would drop. It stayed flat."
+     },
+     {
+      "text": "Warm water can't hold as much oxygen, and the water stayed about as full as it could be",
+      "correct": true
+     },
+     {
+      "text": "Calm summer water mixes in less air, so less oxygen got in",
+      "correct": false,
+      "why_not": "Then the water would be less full than it could be, and the \"% full\" line would drop. It stayed flat: the water took in all the oxygen it could hold."
+     }
+    ],
+    "explain": "In the top 3 m the temperature rose from 9.9 to 18.4 °C, and the oxygen fell from 9.3 to 7.6 mg/L (milligrams in each litre). But how full it was hardly changed: about 82% then about 81%. It could hold less, but it stayed just as full."
+   },
+   "why": "Gases such as oxygen dissolve better in cold water than in warm water. In warm water the tiny particles move faster, and gas escapes more easily.",
+   "comparison": "Comparison: a warm can of soda goes flat faster than a cold one, because warm liquid holds less gas.",
+   "link": "Less oxygen",
+   "connect": "Lesson 2: the sun warms the top layer most. Now add: warm water holds less gas. So the warm top lost oxygen even though it touches the air.",
+   "care": "On a hot day a lake, or a fish tank, holds less oxygen even when it is \"full\". That is one reason hot summers are hard on fish.",
+   "n": 3,
+   "numbers": [
+    {
+     "text": "April",
+     "source": "sonde_clean.csv: first month of data"
+    },
+    {
+     "text": "July",
+     "source": "sonde_clean.csv: warmest month"
+    },
+    {
+     "text": "3",
+     "source": "top band definition, m"
+    },
+    {
+     "text": "9.9",
+     "source": "sonde_clean.csv full casts, monthly median of readings, depth <= 3 m, first month"
+    },
+    {
+     "text": "18.4",
+     "source": "sonde_clean.csv full casts, monthly median of readings, depth <= 3 m, warmest month"
+    },
+    {
+     "text": "9.3",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_mg_l, depth <= 3 m, first month"
+    },
+    {
+     "text": "7.6",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_mg_l, depth <= 3 m, warmest month"
+    },
+    {
+     "text": "82",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth <= 3 m, first month"
+    },
+    {
+     "text": "81",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth <= 3 m, warmest month"
+    }
+   ]
+  },
+  {
+   "id": "bottom",
+   "title": "The bottom is cut off from the air",
+   "look": "This picture shows how full of oxygen the water was, in % of the most it could hold. The box marks the deepest water, below 40 m. The chart under it compares the top with the bottom, day by day.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "season",
+     "param": "odo_pct_sat",
+     "highlight": {
+      "t0": "2026-04-07T15:00:00",
+      "t1": "2026-08-19T06:00:00",
+      "z0": 40.0,
+      "z1": 44,
+      "label": "deeper than 40 m"
+     }
+    },
+    {
+     "type": "line",
+     "title": "How full of oxygen, % of the most it could hold (daily middle value)",
+     "units": "%",
+     "x": [
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-11",
+      "2026-04-12",
+      "2026-04-13",
+      "2026-04-14",
+      "2026-04-15",
+      "2026-04-16",
+      "2026-04-17",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-02",
+      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-09",
+      "2026-05-10",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+      "2026-05-18",
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-23",
+      "2026-05-24",
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-28",
+      "2026-05-29",
+      "2026-05-30",
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-06",
+      "2026-06-07",
+      "2026-06-08",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-13",
+      "2026-06-14",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21",
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-06-28",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+      "2026-07-05",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16",
+      "2026-07-17",
+      "2026-07-18",
+      "2026-07-19",
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-07-31",
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12",
+      "2026-08-13",
+      "2026-08-14",
+      "2026-08-15",
+      "2026-08-16",
+      "2026-08-17",
+      "2026-08-18",
+      "2026-08-19"
+     ],
+     "series": [
+      {
+       "name": "top 3 m",
+       "color": "#3987e5",
+       "values": [
+        82.6,
+        81.9,
+        82.1,
+        82.7,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        81.3,
+        81.6,
+        81.0,
+        81.1,
+        81.8,
+        null,
+        80.0,
+        78.8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        83.3,
+        84.2,
+        null,
+        null,
+        78.1,
+        77.9,
+        78.0,
+        78.3,
+        78.6,
+        80.3,
+        81.8,
+        82.3,
+        83.3,
+        83.1,
+        83.5,
+        83.7,
+        83.8,
+        83.4,
+        83.4,
+        83.8,
+        83.6,
+        82.9,
+        82.8,
+        83.4,
+        83.0,
+        83.1,
+        83.7,
+        83.8,
+        84.5,
+        84.1,
+        84.1,
+        83.8,
+        83.5,
+        81.1,
+        81.8,
+        81.6,
+        82.0,
+        81.6,
+        81.2,
+        80.4,
+        80.9,
+        81.5,
+        81.4,
+        80.9,
+        80.8,
+        80.8,
+        80.7,
+        80.7,
+        80.5,
+        79.6,
+        79.7,
+        79.4,
+        79.4,
+        79.3,
+        79.1,
+        79.3,
+        79.4,
+        null,
+        null,
+        null,
+        80.8,
+        81.2,
+        81.5,
+        81.5,
+        80.9,
+        80.0,
+        79.9,
+        82.6,
+        82.8,
+        83.3,
+        83.0,
+        82.8,
+        83.0,
+        83.5,
+        83.5,
+        83.6,
+        83.1,
+        82.6,
+        82.7,
+        82.8,
+        83.2,
+        82.6,
+        82.0,
+        81.9,
+        81.9,
+        82.1,
+        81.7,
+        80.5,
+        80.0,
+        79.5,
+        80.5,
+        80.9,
+        81.1,
+        81.7,
+        82.0,
+        82.0,
+        81.3,
+        81.2
+       ]
+      },
+      {
+       "name": "deeper than 40 m",
+       "color": "#d95926",
+       "values": [
+        74.8,
+        73.1,
+        73.4,
+        73.8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        67.1,
+        68.0,
+        68.0,
+        68.9,
+        66.9,
+        null,
+        62.2,
+        57.8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        65.6,
+        67.8,
+        null,
+        null,
+        67.5,
+        68.0,
+        67.9,
+        69.6,
+        69.3,
+        70.2,
+        69.9,
+        71.8,
+        73.1,
+        73.4,
+        73.6,
+        74.2,
+        73.3,
+        72.2,
+        71.0,
+        70.4,
+        71.0,
+        72.0,
+        71.7,
+        73.2,
+        75.0,
+        76.5,
+        76.2,
+        75.9,
+        74.1,
+        74.1,
+        73.7,
+        73.8,
+        72.1,
+        68.9,
+        70.8,
+        72.6,
+        73.4,
+        72.8,
+        72.3,
+        71.6,
+        72.2,
+        72.8,
+        73.1,
+        72.6,
+        72.4,
+        70.2,
+        71.8,
+        70.8,
+        70.8,
+        72.9,
+        74.3,
+        75.0,
+        76.1,
+        76.2,
+        76.1,
+        75.8,
+        75.3,
+        null,
+        null,
+        null,
+        72.7,
+        71.6,
+        70.6,
+        69.3,
+        68.6,
+        63.9,
+        66.1,
+        67.5,
+        68.8,
+        70.4,
+        69.5,
+        68.8,
+        68.4,
+        68.3,
+        69.6,
+        69.8,
+        70.8,
+        70.0,
+        71.1,
+        71.2,
+        70.9,
+        70.5,
+        69.9,
+        75.7,
+        76.9,
+        78.0,
+        79.0,
+        79.3,
+        78.9,
+        78.7,
+        77.6,
+        75.6,
+        73.8,
+        71.9,
+        71.0,
+        70.2,
+        67.3,
+        67.6
+       ]
+      }
+     ]
+    }
+   ],
+   "question": {
+    "prompt": "The deep water was less full of oxygen (about 72%) than the top (about 82%). Why?",
+    "choices": [
+     {
+      "text": "It is far from the air, and the layers stop it mixing with the top",
+      "correct": true
+     },
+     {
+      "text": "Cold water holds less oxygen, so the cold deep water is less full",
+      "correct": false,
+      "why_not": "It's the other way round (lesson 3): cold water can hold more. And \"% full\" already allows for temperature, so the deep water really was missing oxygen."
+     },
+     {
+      "text": "The pressure deep down squeezes oxygen out of the water",
+      "correct": false,
+      "why_not": "Pressure does the opposite: it pushes more gas into water. That's why a soda fizzes when you open it and the pressure drops."
+     }
+    ],
+    "explain": "Month by month, the deep water was this full: April 70%, May 70%, June 73%, July 71%, August 75%. The good news: it never ran out. Its lowest daily middle value was 6.5 mg/L on Jul 18, and the lowest single reading 5.9 mg/L."
+   },
+   "why": "Oxygen gets into a lake from the air at the surface, and from algae that make it in sunlight. Deep water is dark and far from the air. Down there, tiny living things called decomposers break down dead material and use up oxygen.",
+   "comparison": "Comparison: like the back of a crowded room with the windows shut; the air near the open door stays fresher.",
+   "link": "Deep cut off",
+   "connect": "Lesson 2: the warm top sits like a lid. Lesson 3: oxygen gets in at the top. Put together, the deep water is cut off from its oxygen supply.",
+   "care": "If deep water runs out of oxygen, the bottom mud can release metals such as iron and manganese that make water harder to treat (general science). This season it never ran out.",
+   "n": 4,
+   "numbers": [
+    {
+     "text": "April",
+     "source": "sonde_clean.csv month"
+    },
+    {
+     "text": "70",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "May",
+     "source": "sonde_clean.csv month"
+    },
+    {
+     "text": "70",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "June",
+     "source": "sonde_clean.csv month"
+    },
+    {
+     "text": "73",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "July",
+     "source": "sonde_clean.csv month"
+    },
+    {
+     "text": "71",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "August",
+     "source": "sonde_clean.csv month"
+    },
+    {
+     "text": "75",
+     "source": "sonde_clean.csv full casts, monthly median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "40",
+     "source": "deep band definition, m"
+    },
+    {
+     "text": "72",
+     "source": "sonde_clean.csv full casts, whole-season median of readings odo_pct_sat, depth >= 40 m"
+    },
+    {
+     "text": "82",
+     "source": "sonde_clean.csv full casts, whole-season median of readings odo_pct_sat, depth <= 3 m"
+    },
+    {
+     "text": "6.5",
+     "source": "storm_numbers.json season.deep_do_min_mg_l"
+    },
+    {
+     "text": "Jul 18",
+     "source": "storm_numbers.json season.deep_do_min_mg_l"
+    },
+    {
+     "text": "5.9",
+     "source": "storm_numbers.json season.deep_all_readings_min_do_mg_l_after_qc"
+    }
+   ]
+  },
+  {
+   "id": "sinks",
+   "title": "Cold river water sinks",
+   "look": "These charts cover Aug 1 to Aug 12. The first compares the river flowing in with the deepest lake water. The second shows the oxygen in that deep water. The third shows how much river water was flowing in.",
+   "visuals": [
+    {
+     "type": "line",
+     "title": "Temperature (daily)",
+     "units": "°C",
+     "x": [
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12"
+     ],
+     "series": [
+      {
+       "name": "lake, deeper than 40 m",
+       "color": "#3987e5",
+       "values": [
+        15.6,
+        15.7,
+        15.7,
+        15.7,
+        15.7,
+        15.6,
+        15.5,
+        15.3,
+        14.6,
+        14.4,
+        14.3,
+        14.3
+       ]
+      },
+      {
+       "name": "river flowing in",
+       "color": "#d95926",
+       "values": [
+        16.5,
+        16.9,
+        15.3,
+        15.1,
+        15.1,
+        15.4,
+        14.6,
+        13.4,
+        13.1,
+        13.6,
+        15.0,
+        15.6
+       ]
+      }
+     ]
+    },
+    {
+     "type": "line",
+     "title": "Oxygen in the lake deeper than 40 m (daily middle value)",
+     "units": "mg/L",
+     "x": [
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12"
+     ],
+     "series": [
+      {
+       "name": "oxygen",
+       "color": "#3987e5",
+       "values": [
+        7.08,
+        7.04,
+        7.0,
+        6.94,
+        7.52,
+        7.65,
+        7.78,
+        7.91,
+        8.09,
+        8.05,
+        8.05,
+        7.93
+       ]
+      }
+     ]
+    },
+    {
+     "type": "line",
+     "title": "River flow into the reservoir, cubic feet per second",
+     "units": "cfs",
+     "x": [
+      "2026-08-01",
+      "2026-08-02",
+      "2026-08-03",
+      "2026-08-04",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10",
+      "2026-08-11",
+      "2026-08-12"
+     ],
+     "series": [
+      {
+       "name": "river flow",
+       "color": "#d95926",
+       "values": [
+        467.0,
+        459.0,
+        468.0,
+        469.0,
+        474.0,
+        510.0,
+        521.0,
+        577.0,
+        582.0,
+        562.0,
+        461.0,
+        375.0
+       ]
+      }
+     ]
+    }
+   ],
+   "question": {
+    "prompt": "In early August the river got colder than any of the lake water (on Aug 9 it was 13.1 °C; the lake's coldest was 14.5 °C). Then the deepest water got colder and gained oxygen. Why is the extra oxygen a clue about where the river water went?",
+    "choices": [
+     {
+      "text": "The deep water got colder, so it could hold more oxygen",
+      "correct": false,
+      "why_not": "Cold water can hold more (lesson 3), but being able to hold more doesn't put any in. The deep water is cut off from the air (lesson 4), so the new oxygen had to come from somewhere."
+     },
+     {
+      "text": "Algae near the bottom made more oxygen",
+      "correct": false,
+      "why_not": "Algae need sunlight to make oxygen, and the deep water is dark (lesson 4)."
+     },
+     {
+      "text": "The bottom is cut off from the air, so new oxygen most likely arrived with new water: the cold river",
+      "correct": true
+     }
+    ],
+    "explain": "From Aug 4 to Aug 11, the deepest water cooled from 15.7 to 14.3 °C, and its oxygen rose from 6.9 to 8.1 mg/L (by Aug 9). Meanwhile the river cooled from 15.1 to 13.1 °C, and its flow rose from 469 to 582 cubic feet per second. That fits cold river water sliding along the bottom: the team's best explanation, not something the data proves."
+   },
+   "why": "Cold water is heavier (denser) than warm water, so cold river water slides under the lake water to the bottom. A river tumbling over rocks picks up oxygen from the air and carries it down.",
+   "comparison": "Comparison: cold air from an open freezer spills down onto your feet, not up to your face.",
+   "link": "Cold sinks",
+   "connect": "Lesson 2 in reverse: cold water is heavy, so water colder than the whole lake sinks to the bottom. Lesson 4: that is how new oxygen reaches the deep water.",
+   "care": "Where river water ends up depends on its temperature. That same rule decides where a storm's mud goes. That's next.",
+   "n": 5,
+   "numbers": [
+    {
+     "text": "Aug 1",
+     "source": "storm_numbers.json season.deep_aug1_12 first day"
+    },
+    {
+     "text": "Aug 12",
+     "source": "storm_numbers.json season.deep_aug1_12 last day"
+    },
+    {
+     "text": "Aug 9",
+     "source": "storm_numbers.json season.river_temp_mean_aug1_12, coldest day"
+    },
+    {
+     "text": "13.1",
+     "source": "storm_numbers.json season.river_temp_mean_aug1_12 minimum"
+    },
+    {
+     "text": "14.5",
+     "source": "sonde_clean.csv full casts: coldest 1 m daily median that day"
+    },
+    {
+     "text": "Aug 4",
+     "source": "storm_numbers.json season.deep_aug1_12, warmest deep day"
+    },
+    {
+     "text": "Aug 11",
+     "source": "storm_numbers.json season.deep_aug1_12, coldest deep day"
+    },
+    {
+     "text": "15.7",
+     "source": "storm_numbers.json season.deep_aug1_12 temperature"
+    },
+    {
+     "text": "14.3",
+     "source": "storm_numbers.json season.deep_aug1_12 temperature"
+    },
+    {
+     "text": "6.9",
+     "source": "storm_numbers.json season.deep_aug1_12 oxygen"
+    },
+    {
+     "text": "8.1",
+     "source": "storm_numbers.json season.deep_aug1_12 oxygen, highest"
+    },
+    {
+     "text": "Aug 9",
+     "source": "storm_numbers.json season.deep_aug1_12, highest-oxygen day"
+    },
+    {
+     "text": "15.1",
+     "source": "storm_numbers.json season.river_temp_mean_aug1_12"
+    },
+    {
+     "text": "13.1",
+     "source": "storm_numbers.json season.river_temp_mean_aug1_12"
+    },
+    {
+     "text": "469",
+     "source": "storm_numbers.json season.flow_cfs_aug1_12"
+    },
+    {
+     "text": "582",
+     "source": "storm_numbers.json season.flow_cfs_aug1_12, highest"
+    }
+   ]
+  },
+  {
+   "id": "mud",
+   "title": "Follow the storm's mud",
+   "look": "The orange line on top is the river gage above the reservoir, measuring how muddy (cloudy) the river was. The picture below shows how muddy the lake was at each depth. The yellow dashed line marks when the river was muddiest.",
+   "visuals": [
+    {
+     "type": "strip",
+     "which": "gage"
+    },
+    {
+     "type": "heat",
+     "view": "storm",
+     "param": "turb_ntu",
+     "highlight": {
+      "t0": "2026-08-14T18:06:41",
+      "t1": "2026-08-19T06:06:50",
+      "z0": 7.5,
+      "z1": 17.5,
+      "label": "the muddy layer, about 8 to 18 m"
+     }
+    }
+   ],
+   "question": {
+    "prompt": "The storm's mud showed up as a layer in the middle, not at the top or the bottom. Clue: the river water was about 16.0 °C, and before the storm the lake was that warm at about 5 m deep. Why the middle?",
+    "choices": [
+     {
+      "text": "Mud is light, so the muddy water floated up off the bottom",
+      "correct": false,
+      "why_not": "Mud is heavier than water, so it makes water heavier, not lighter. That is why the layer sat a bit deeper than the clue alone suggests."
+     },
+     {
+      "text": "The river was cooler than the top but warmer than the deep water, so it slid in where the lake matched its weight",
+      "correct": true
+     },
+     {
+      "text": "The river was colder than all the lake, but ran out of time before reaching the bottom",
+      "correct": false,
+      "why_not": "The clue says no: the lake had water as warm as the river, with colder water below it. Water colder than everything goes all the way down (lesson 5)."
+     }
+    ],
+    "explain": "The river was muddiest in the middle of the night on Aug 15, when the gage read 329 FNU. In the lake, the muddiest spot was 23.1 NTU at 13 m deep, around midday on Aug 16, about a day and a half after the river's peak. The muddy layer sat about 8 to 18 m deep, while the surface changed only a little. The surface had been 17.1 °C before the storm, warmer than the river, so the river slid under it. (FNU and NTU are two units for cloudiness; bigger means muddier.)"
+   },
+   "why": "Water flowing into a lake sinks or floats until it meets lake water of the same weight (density). Mud makes water heavier, so muddy water goes a bit deeper still. Then it spreads sideways as a layer. Scientists call this an interflow.",
+   "comparison": "Comparison: pour a sports drink gently into a glass of water and it can slide under or between layers instead of mixing in.",
+   "link": "Mud in the middle",
+   "connect": "Lessons 2 and 5 again: water flowing in finds the depth that matches its weight. Warm river: top. Cold river: bottom. In-between river: the middle.",
+   "care": "From the shore the lake looked almost normal, but a muddy band was hiding in the middle. Operators need to know which depth the muddy water is at.",
+   "n": 6,
+   "numbers": [
+    {
+     "text": "16.0",
+     "source": "storm_numbers.json reservoir.river_temp_mean_aug14_15"
+    },
+    {
+     "text": "5",
+     "source": "storm_numbers.json reservoir.depth_where_prestorm_reservoir_matches_river_temp"
+    },
+    {
+     "text": "in the middle of the night",
+     "source": "storm_numbers.json gage.peak_time, hour of day"
+    },
+    {
+     "text": "Aug 15",
+     "source": "storm_numbers.json gage.peak_time"
+    },
+    {
+     "text": "329",
+     "source": "storm_numbers.json gage.peak_turb_fnu"
+    },
+    {
+     "text": "23.1",
+     "source": "storm_numbers.json reservoir.peak_ntu"
+    },
+    {
+     "text": "13",
+     "source": "storm_numbers.json reservoir.peak_depth"
+    },
+    {
+     "text": "around midday",
+     "source": "storm_numbers.json reservoir.peak_cast, hour of day"
+    },
+    {
+     "text": "Aug 16",
+     "source": "storm_numbers.json reservoir.peak_cast"
+    },
+    {
+     "text": "a day and a half",
+     "source": "storm_numbers.json reservoir.hours_gage_peak_to_reservoir_peak (34.4 h, rounded to half days)"
+    },
+    {
+     "text": "8",
+     "source": "storm_numbers.json reservoir.layer_top_median"
+    },
+    {
+     "text": "18",
+     "source": "storm_numbers.json reservoir.layer_bottom_median"
+    },
+    {
+     "text": "17.1",
+     "source": "storm_numbers.json reservoir.prestorm_temp_surface_1m"
+    }
+   ]
+  },
+  {
+   "id": "fades",
+   "title": "The muddy layer sinks and fades",
+   "look": "Same picture. The white dots mark the usual depth of the muddiest spot on each day. Watch where the dots go after the peak, inside the box.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "storm",
+     "param": "turb_ntu",
+     "highlight": {
+      "t0": "2026-08-16T12:06:14",
+      "t1": "2026-08-19T06:06:50",
+      "z0": 3.0,
+      "z1": 24.0,
+      "label": "after the peak"
+     },
+     "points": [
+      [
+       "2026-08-14T12:07:00",
+       7.5
+      ],
+      [
+       "2026-08-15T10:06:00",
+       12.0
+      ],
+      [
+       "2026-08-16T09:07:00",
+       13.0
+      ],
+      [
+       "2026-08-17T03:07:00",
+       14.0
+      ],
+      [
+       "2026-08-18T12:08:00",
+       20.0
+      ],
+      [
+       "2026-08-19T03:07:00",
+       21.0
+      ]
+     ]
+    }
+   ],
+   "question": {
+    "prompt": "After the peak, the white dots go deeper each day and the layer gets paler. What best explains both?",
+    "choices": [
+     {
+      "text": "New muddy river water kept arriving and pushed the layer down",
+      "correct": false,
+      "why_not": "The river gage was back under 10 FNU after around midday on Aug 15, so little new mud was coming in. Something inside the lake moved the layer."
+     },
+     {
+      "text": "Mud is heavier than water, so it slowly settles, and the layer loses mud as it sinks",
+      "correct": true
+     },
+     {
+      "text": "The mud dissolved into the water, like sugar in tea",
+      "correct": false,
+      "why_not": "Mud is tiny bits of rock and soil that don't dissolve. And dissolving wouldn't make the layer move deeper."
+     }
+    ],
+    "explain": "Day by day, the usual depth of the muddiest spot, and the muddiest reading: Aug 14: 7.5 m, 6.0 NTU; Aug 15: 12 m, 19.6 NTU; Aug 16: 13 m, 23.1 NTU; Aug 17: 14 m, 17.5 NTU; Aug 18: 20 m, 10.4 NTU; Aug 19: 21 m, 8.0 NTU. It was still there when the data ends: at 6:06 a.m. on Aug 19 the layer was 13 to 22 m deep."
+   },
+   "why": "Mud is tiny bits of soil and rock, heavier than water, so they slowly settle. As they drop out, the layer gets less muddy. (The data cannot tell settling apart from some of the layer leaving through the dam's outlets.)",
+   "comparison": "Comparison: like a snow globe after you stop shaking it, the flakes drift down and the water clears from the top.",
+   "link": "Mud settles",
+   "connect": "Lesson 6: mud made the storm water ride a bit deeper. Now that same weight slowly pulls the mud down.",
+   "care": "The muddy band lasted for days after the river cleared, and drifted deeper. So what an intake draws in can depend on a storm for days afterwards.",
+   "n": 7,
+   "numbers": [
+    {
+     "text": "Aug 14",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "7.5",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "6.0",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "Aug 15",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "12",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "19.6",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "Aug 16",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "13",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "23.1",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "Aug 17",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "14",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "17.5",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "Aug 18",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "20",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "10.4",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "Aug 19",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "21",
+     "source": "storm_numbers.json reservoir_extra.peak_depth_by_day"
+    },
+    {
+     "text": "8.0",
+     "source": "storm_numbers.json reservoir_extra.peak_ntu_by_day"
+    },
+    {
+     "text": "10",
+     "source": "storm_trace.py: threshold behind gage.last_above_10, FNU"
+    },
+    {
+     "text": "around midday",
+     "source": "storm_numbers.json gage.last_above_10, hour of day"
+    },
+    {
+     "text": "Aug 15",
+     "source": "storm_numbers.json gage.last_above_10"
+    },
+    {
+     "text": "6:06 a.m.",
+     "source": "storm_numbers.json reservoir.last_cast"
+    },
+    {
+     "text": "Aug 19",
+     "source": "storm_numbers.json reservoir.last_cast"
+    },
+    {
+     "text": "13",
+     "source": "storm_numbers.json reservoir.last_cast_layer"
+    },
+    {
+     "text": "22",
+     "source": "storm_numbers.json reservoir.last_cast_layer"
+    }
+   ]
+  },
+  {
+   "id": "minerals",
+   "title": "Mud and rainwater travel together",
+   "look": "Now the picture shows specific conductance: how easily electricity passes through the water. More dissolved minerals (like tiny bits of salt from rocks) means a higher number. The box is the same muddy layer.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "storm",
+     "param": "spcond_us_cm",
+     "highlight": {
+      "t0": "2026-08-14T18:06:41",
+      "t1": "2026-08-19T06:06:50",
+      "z0": 7.5,
+      "z1": 17.5,
+      "label": "the muddy layer, about 8 to 18 m"
+     }
+    }
+   ],
+   "question": {
+    "prompt": "The muddy layer had fewer dissolved minerals than the same depths before the storm. What is the best explanation?",
+    "choices": [
+     {
+      "text": "It was fresh rainwater, which has few minerals, arriving with the mud",
+      "correct": true
+     },
+     {
+      "text": "The storm water was a bit warmer, and warm water holds fewer minerals",
+      "correct": false,
+      "why_not": "Minerals don't leave water when it warms up. And this picture is corrected to one standard temperature, so temperature isn't the answer."
+     },
+     {
+      "text": "The minerals sank to the bottom with the mud",
+      "correct": false,
+      "why_not": "Dissolved minerals are mixed right into the water, like salt in soup, so they don't settle out. And the river already had fewer minerals as the storm arrived."
+     }
+    ],
+    "explain": "Until the sensor was serviced on Aug 18, the muddy layer read about 6 to 12 µS/cm lower than the same depths before the storm. The river showed the same thing: at the gage it fell from 296.5 to 280 µS/cm as the storm water arrived. So the mud and the rainwater arrived together, in the same layer."
+   },
+   "why": "Rain is almost pure water, with very few dissolved minerals. River water carries minerals picked up slowly from rocks and soil. A storm adds rainwater quickly, so the river gets muddier but its minerals get watered down.",
+   "comparison": "Comparison: add water to a glass of juice and it tastes weaker, even though none of the juice went away.",
+   "link": "Rainwater tag",
+   "connect": "Lesson 6 followed the mud into the middle. This second clue shows the rainwater landed in the same layer. Two clues, one layer.",
+   "care": "When two different measurements point to the same layer, the team can be more sure it really is storm water.",
+   "n": 8,
+   "numbers": [
+    {
+     "text": "Aug 18",
+     "source": "storm_numbers.json reservoir.service_events_in_window"
+    },
+    {
+     "text": "6",
+     "source": "storm_casts.csv layer_spcond_change, storm casts before that service event, smallest drop"
+    },
+    {
+     "text": "12",
+     "source": "storm_casts.csv layer_spcond_change, storm casts before that service event, largest drop"
+    },
+    {
+     "text": "296.5",
+     "source": "storm_numbers.json gage.spcond_before_onset_median"
+    },
+    {
+     "text": "280",
+     "source": "storm_numbers.json gage.spcond_min"
+    }
+   ]
+  },
+  {
+   "id": "plant",
+   "title": "What reaches the water plant",
+   "look": "The top line is the river's mud at the gage again. The green line below is the organic carbon (TOC) in the water arriving at the Foothills treatment plant, measured once a day in a lab.",
+   "visuals": [
+    {
+     "type": "strip",
+     "which": "gage"
+    },
+    {
+     "type": "strip",
+     "which": "toc"
+    }
+   ],
+   "question": {
+    "prompt": "The plant's organic carbon jumped on Aug 16. Can we be sure the storm caused it?",
+    "choices": [
+     {
+      "text": "Yes: it jumped the day after the river's muddiest moment",
+      "correct": false,
+      "why_not": "Timing is a strong clue, but two things can line up by chance. With one storm and an unknown intake depth, \"probably\" is the honest answer."
+     },
+     {
+      "text": "Probably, but we need more information",
+      "correct": true
+     },
+     {
+      "text": "No: the mud stayed in the middle of the lake, so it couldn't reach the plant",
+      "correct": false,
+      "why_not": "That depends on the depth the plant takes its water from, and nobody has told us. If the intake is about 8 to 18 m deep, it was drawing from the muddy layer."
+     }
+    ],
+    "explain": "Organic carbon was 2.0 mg/L every day from Aug 10 to Aug 15, then 2.5 mg/L on Aug 16. A jump that big is rare: in the summers of 2022 to 2026, only 0.7% of 448 day-to-day changes were that big, and it came the day after the river's muddiest moment. But one storm cannot prove it. The missing clue: nobody has told us how deep the plant's water intake is. If it takes in water from about 8 to 18 m deep, it was taking in the muddy layer."
+   },
+   "why": "Organic carbon is tiny bits of dead leaves, soil and plant material in the water. Storms wash it off the land into rivers. Good scientists say \"probably\" when two things line up once; they want more storms, or the missing measurement, before they say one thing caused the other.",
+   "comparison": "Comparison: if the cookie jar is empty right after your brother walks by, he is a suspect, but you would still want more evidence.",
+   "link": "The plant",
+   "connect": "The chain so far: the storm water found its depth (lesson 6), stayed for days (lesson 7) and carried rainwater with it (lesson 8). The missing link to the plant is the intake depth.",
+   "care": "Organic carbon makes water harder to treat, so the plant adjusts its treatment when it rises. Knowing a day ahead which depth the storm water is at would help operators get ready.",
+   "n": 9,
+   "numbers": [
+    {
+     "text": "Aug 16",
+     "source": "storm_numbers.json plant.toc_first_day_above_baseline"
+    },
+    {
+     "text": "8",
+     "source": "storm_numbers.json reservoir.layer_top_median"
+    },
+    {
+     "text": "18",
+     "source": "storm_numbers.json reservoir.layer_bottom_median"
+    },
+    {
+     "text": "2.0",
+     "source": "storm_numbers.json plant.toc_baseline_aug10_15"
+    },
+    {
+     "text": "Aug 10",
+     "source": "storm_numbers.json plant.toc_aug10_19"
+    },
+    {
+     "text": "Aug 15",
+     "source": "storm_numbers.json plant.toc_aug10_19"
+    },
+    {
+     "text": "2.5",
+     "source": "storm_numbers.json plant.toc_max_after"
+    },
+    {
+     "text": "Aug 16",
+     "source": "storm_numbers.json plant.toc_first_day_above_baseline"
+    },
+    {
+     "text": "2022",
+     "source": "FoothillsInfluent.csv: first year with summer data"
+    },
+    {
+     "text": "2026",
+     "source": "FoothillsInfluent.csv: last year"
+    },
+    {
+     "text": "0.7",
+     "source": "storm_numbers.json plant.share_of_summer_daily_toc_changes_at_least_that_big"
+    },
+    {
+     "text": "448",
+     "source": "storm_numbers.json plant.summer_daily_toc_changes_n"
+    },
+    {
+     "text": "8",
+     "source": "storm_numbers.json reservoir.layer_top_median"
+    },
+    {
+     "text": "18",
+     "source": "storm_numbers.json reservoir.layer_bottom_median"
+    }
+   ]
+  },
+  {
+   "id": "together",
+   "title": "Put it all together: a cold, muddy spring storm",
+   "whatif": true,
+   "look": "What if? This storm is made up, to test your thinking; nothing here was measured. Imagine heavy spring rain on melting snow. The river turns muddy, and it is colder than every layer of the lake, even the bottom. The lake is already layered: on Apr 7 the top was 5.3 °C warmer than the deep water. The picture is the real August storm, for comparison.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "storm",
+     "param": "turb_ntu",
+     "highlight": {
+      "t0": "2026-08-14T18:06:41",
+      "t1": "2026-08-19T06:06:50",
+      "z0": 7.5,
+      "z1": 17.5,
+      "label": "the muddy layer, about 8 to 18 m"
+     },
+     "note": "For comparison, the real August storm (not the what-if)"
+    }
+   ],
+   "questions": [
+    {
+     "prompt": "Where would this storm's muddy water go?",
+     "choices": [
+      {
+       "text": "Into the middle, like the August storm",
+       "correct": false,
+       "why_not": "The August river was in-between: warmer than the deep water. This river is colder than everything, and mud makes it heavier still, so nothing stops it before the bottom."
+      },
+      {
+       "text": "Through the whole lake, because a storm stirs everything up",
+       "correct": false,
+       "why_not": "A layered lake doesn't mix easily (lesson 2). Water flowing in slides to the depth that matches its weight (lessons 5 and 6)."
+      },
+      {
+       "text": "Down along the bottom",
+       "correct": true
+      }
+     ],
+     "explain": "Cold water is heavier than warm water, and mud makes it heavier still. Water colder than every layer keeps sinking until it reaches the bottom, like the cold river in early August (lesson 5)."
+    },
+    {
+     "prompt": "Over the next days, what would the sonde's pictures most likely show?",
+     "choices": [
+      {
+       "text": "A muddy band near the bottom, a fairly clear top, and a little more oxygen deep down",
+       "correct": true
+      },
+      {
+       "text": "Muddy water at every depth at the same moment",
+       "correct": false,
+       "why_not": "A storm doesn't change every depth at once. Its water arrives as a layer at the depth that matches its weight (lessons 6 and 7)."
+      },
+      {
+       "text": "A muddy band near the bottom, with less oxygen, because the layers act like a lid",
+       "correct": false,
+       "why_not": "The lid blocks air from the top, but this water comes in from the side, along the bottom. River water that tumbled over rocks carries oxygen with it (lesson 5)."
+      }
+     ],
+     "explain": "The mud would show as a band near the bottom, fading slowly as it settles (lesson 7). The deep oxygen would likely rise, as it did in early August when a cold river reached the bottom. This is a prediction, not a measurement."
+    },
+    {
+     "prompt": "Suppose the plant's intake were near the surface. Would the plant notice this storm quickly?",
+     "choices": [
+      {
+       "text": "Yes, just as fast: the plant gets the same water from the whole lake",
+       "correct": false,
+       "why_not": "A layered lake is not the same everywhere (lesson 2). An intake mostly draws water from around its own depth."
+      },
+      {
+       "text": "Probably not much at first, because the storm water slid in underneath the intake",
+       "correct": true
+      },
+      {
+       "text": "Never: the muddy water can never reach the plant",
+       "correct": false,
+       "why_not": "\"Never\" is too strong. In autumn the top cools and the layers mix again (general science), so what is left of the storm water can spread upward."
+      }
+     ],
+     "explain": "With the storm water along the bottom and the intake near the top, the plant would probably see little change at first. Flip it: a warm storm floats, so a shallow intake would get it fast. Either way, the answer depends on the intake depth, the missing clue from lesson 9."
+    }
+   ],
+   "why": "Everything here comes from one idea: water finds the depth that matches its weight. Temperature sets most of that weight, and mud adds to it. Layers keep water from mixing, so what flows in stays at its own depth for a while.",
+   "comparison": "Comparison: in a layered drink, each liquid poured in carefully settles at its own level.",
+   "link": "What if",
+   "connect": "You just used the whole chain: temperature sets weight (lesson 2), weight picks the depth (lessons 5 and 6), new water brings oxygen to the cut-off bottom (lesson 4), mud settles (lesson 7), and the intake depth decides what the plant gets (lesson 9).",
+   "care": "This is what the team hopes the sonde can do for real: show operators which depth a storm's water is at, before it reaches the plant.",
+   "n": 10,
+   "numbers": [
+    {
+     "text": "Apr 7",
+     "source": "storm_numbers.json season.dt_first_observed_day"
+    },
+    {
+     "text": "5.3",
+     "source": "storm_numbers.json season.dt_first_observed_day"
+    }
+   ]
+  },
+  {
+   "id": "detective",
+   "title": "Data detective",
+   "bonus": true,
+   "look": "This picture shows chlorophyll, a sign of algae. The dotted lines mark dates the team spotted something odd. Look inside the box.",
+   "visuals": [
+    {
+     "type": "heat",
+     "view": "season",
+     "param": "chl_ug_l",
+     "highlight": {
+      "t0": "2026-06-14T00:05:23",
+      "t1": "2026-06-18T00:05:23",
+      "z0": 1,
+      "z1": 44,
+      "label": "Jun 16"
+     }
+    }
+   ],
+   "question": {
+    "prompt": "On Jun 16 every depth changed at the same moment. What is most likely?",
+    "choices": [
+     {
+      "text": "The layers flipped over and the whole lake mixed",
+      "correct": false,
+      "why_not": "Mixing a whole lake takes time, and this lake stayed layered all season (lesson 2). It can't mix top to bottom between one sweep and the next."
+     },
+     {
+      "text": "Someone cleaned or adjusted the sensor",
+      "correct": true
+     },
+     {
+      "text": "Storm water rushed in and changed the water",
+      "correct": false,
+      "why_not": "Storm water arrives as a layer at one depth and spreads over hours and days (lessons 6 and 7). It doesn't change every depth at the same moment."
+     }
+    ],
+    "explain": "A real lake does not change at every depth at the very same moment. On Jun 16 the middle chlorophyll reading dropped from 0.88 to -0.19 µg/L. A negative amount of algae is impossible, which is another clue that the sensor changed, not the water. The team found 7 dates like this: Apr 28, May 4, May 14, May 18, Jun 16, Jul 20, Aug 18. Denver Water has not yet told us what was done on those days."
+   },
+   "why": "Sensors that live underwater get coated with slime and silt, so people clean them and check them against known standards (calibrate them). Right after that, readings can jump. Data detectives look for changes that are too sudden, or too perfectly lined up, to be real.",
+   "comparison": "Comparison: if every clock in your house jumps by the same amount at once, someone reset the clocks; time did not speed up.",
+   "link": "Sensor clues",
+   "connect": "Lesson 1: every stripe is one sweep. When every depth jumps at once, between one sweep and the next, suspect the sensor, not the lake.",
+   "care": "If nobody spotted these dates, someone could mistake a cleaned sensor for a change in the lake and draw the wrong conclusion.",
+   "n": 11,
+   "numbers": [
+    {
+     "text": "Apr 28",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "May 4",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "May 14",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "May 18",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "Jun 16",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "Jul 20",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "Aug 18",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "Jun 16",
+     "source": "sonde_clean.csv: first reading of each segment (service events), biggest chlorophyll drop"
+    },
+    {
+     "text": "Jun 16",
+     "source": "sonde_clean.csv: first reading of each segment (service events)"
+    },
+    {
+     "text": "0.88",
+     "source": "sonde_clean.csv: median chl_ug_l of the segment before"
+    },
+    {
+     "text": "-0.19",
+     "source": "sonde_clean.csv: median chl_ug_l of the segment after"
+    },
+    {
+     "text": "7",
+     "source": "sonde_clean.csv: first reading of each segment (service events), count"
+    }
+   ]
+  },
+  {
+   "id": "tempcorr",
+   "title": "The sensor that forgot about temperature",
+   "bonus": true,
+   "look": "These two charts show a typical sweep of the sonde in July, from the surface (top) down to the bottom: at each depth, the middle value of all that month's sweeps. The first chart is the temperature. The second chart shows conductivity, how easily electricity passes through the water. The orange line is what the sensor logged. The blue line is the same reading after the team's correction. The dashed line is the river gage that month.",
+   "visuals": [
+    {
+     "type": "profile",
+     "title": "July, typical sweep: temperature by depth",
+     "units": "°C",
+     "depths": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      18.0,
+      19.0,
+      20.0,
+      21.0,
+      22.0,
+      23.0,
+      24.0,
+      25.0,
+      26.0,
+      27.0,
+      28.0,
+      29.0,
+      30.0,
+      31.0,
+      32.0,
+      33.0,
+      34.0,
+      35.0,
+      36.0,
+      37.0,
+      38.0,
+      39.0,
+      40.0,
+      41.0,
+      42.0,
+      43.0,
+      44.0,
+      45.0
+     ],
+     "series": [
+      {
+       "name": "temperature",
+       "color": "#3987e5",
+       "values": [
+        19.3,
+        18.2,
+        17.8,
+        17.6,
+        17.3,
+        17.1,
+        16.9,
+        16.7,
+        16.6,
+        16.4,
+        16.2,
+        16.3,
+        16.0,
+        16.0,
+        15.8,
+        15.7,
+        15.6,
+        15.5,
+        15.4,
+        15.3,
+        15.1,
+        15.1,
+        15.1,
+        15.0,
+        14.9,
+        14.9,
+        14.9,
+        14.8,
+        14.8,
+        14.8,
+        14.8,
+        14.7,
+        14.7,
+        14.7,
+        14.7,
+        14.7,
+        14.7,
+        14.7,
+        14.6,
+        14.7,
+        14.6,
+        14.6,
+        14.6,
+        14.6,
+        14.9
+       ]
+      }
+     ]
+    },
+    {
+     "type": "profile",
+     "title": "July, typical sweep: conductivity by depth",
+     "units": "µS/cm",
+     "depths": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0,
+      13.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      18.0,
+      19.0,
+      20.0,
+      21.0,
+      22.0,
+      23.0,
+      24.0,
+      25.0,
+      26.0,
+      27.0,
+      28.0,
+      29.0,
+      30.0,
+      31.0,
+      32.0,
+      33.0,
+      34.0,
+      35.0,
+      36.0,
+      37.0,
+      38.0,
+      39.0,
+      40.0,
+      41.0,
+      42.0,
+      43.0,
+      44.0,
+      45.0
+     ],
+     "series": [
+      {
+       "name": "raw, as logged",
+       "color": "#d95926",
+       "values": [
+        285.6,
+        278.1,
+        276.3,
+        274.9,
+        272.0,
+        269.9,
+        268.3,
+        267.2,
+        266.0,
+        265.6,
+        264.9,
+        264.0,
+        263.0,
+        262.8,
+        262.3,
+        262.0,
+        261.8,
+        261.6,
+        261.4,
+        261.3,
+        261.1,
+        261.0,
+        260.9,
+        260.9,
+        260.9,
+        261.1,
+        261.2,
+        261.4,
+        261.1,
+        261.4,
+        261.4,
+        261.3,
+        261.4,
+        261.2,
+        261.3,
+        261.2,
+        261.4,
+        261.4,
+        261.4,
+        261.5,
+        261.5,
+        261.5,
+        261.5,
+        261.5,
+        261.8
+       ]
+      },
+      {
+       "name": "corrected to 25 °C",
+       "color": "#3987e5",
+       "values": [
+        324.2,
+        324.1,
+        323.9,
+        323.6,
+        323.1,
+        322.4,
+        318.5,
+        322.2,
+        321.4,
+        321.8,
+        322.1,
+        320.9,
+        322.0,
+        321.5,
+        322.4,
+        321.2,
+        322.2,
+        321.9,
+        322.2,
+        321.4,
+        321.9,
+        321.6,
+        321.4,
+        322.1,
+        322.5,
+        322.8,
+        322.9,
+        323.4,
+        323.8,
+        323.7,
+        323.9,
+        324.2,
+        324.6,
+        324.4,
+        325.0,
+        325.1,
+        325.5,
+        325.6,
+        326.0,
+        325.8,
+        326.3,
+        325.8,
+        326.2,
+        326.6,
+        326.0
+       ]
+      }
+     ],
+     "ref": {
+      "value": 317.0,
+      "label": "river gage, July middle value"
+     }
+    }
+   ],
+   "question": {
+    "prompt": "The raw reading (orange) was higher near the warm surface than in the cold deep water. Why?",
+    "choices": [
+     {
+      "text": "More minerals flowed in near the surface",
+      "correct": false,
+      "why_not": "Then the corrected (blue) line would lean too. It stands almost straight up and down, so the minerals were about the same at every depth."
+     },
+     {
+      "text": "Warm water dissolves more minerals, like sugar in hot tea",
+      "correct": false,
+      "why_not": "Hot tea can dissolve more sugar, but only if you add more sugar. The corrected line shows the amount of minerals was about the same at every depth."
+     },
+     {
+      "text": "Warm water lets electricity pass more easily",
+      "correct": true
+     }
+    ],
+    "explain": "In July the top 3 m was 18.4 °C and the water deeper than 40 m was 14.6 °C. The raw reading went from 280 µS/cm at the top to 262 at the bottom: the same shape as the temperature. In all 357 full sweeps, the raw reading and the temperature moved together almost perfectly: a match score (correlation) of 0.98 out of 1. After correcting every reading to what it would be at 25 °C, the score was 0.00: no link at all. The corrected line stands almost straight up and down (324 at the top, 326 at the bottom), so the minerals were about the same at every depth. It also agrees with the river: in June the corrected lake reading was about 313 µS/cm and the river gage about 315; in early August, before the storm, 312 and 307. The raw readings, 247 and 256, were far below the river. The sensor was not broken. It logged the reading without the temperature correction, so the team corrected it before using it. Denver Water has not yet confirmed the sensor's setting."
+   },
+   "why": "Electricity travels through water on dissolved minerals, which are tiny charged particles called ions. In warm water those particles move faster, so electricity passes more easily, even when the amount of minerals is exactly the same. So scientists convert every reading to what it would be at one standard temperature. The corrected number is called specific conductance, and it follows only the minerals.",
+   "comparison": "Comparison: to compare two runners fairly, you would not time one with the wind at her back and the other running into it; you take the wind out first.",
+   "link": "Temperature fix",
+   "connect": "Lesson 8 used the corrected reading to follow rainwater. This is why it had to be corrected first: raw, it mostly shows lesson 2's warm top.",
+   "care": "Without the correction, the lake would seem to have far fewer minerals than the river flowing into it: a false alarm.",
+   "n": 12,
+   "numbers": [
+    {
+     "text": "July",
+     "source": "sonde_clean.csv: warmest month"
+    },
+    {
+     "text": "July",
+     "source": "sonde_clean.csv: warmest month"
+    },
+    {
+     "text": "3",
+     "source": "top band definition, m"
+    },
+    {
+     "text": "18.4",
+     "source": "sonde_clean.csv full casts, warmest month, median of readings, temp_c, depth <= 3 m"
+    },
+    {
+     "text": "40",
+     "source": "deep band definition, m"
+    },
+    {
+     "text": "14.6",
+     "source": "sonde_clean.csv full casts, warmest month, median temp_c, depth >= 40 m"
+    },
+    {
+     "text": "280",
+     "source": "sonde_clean.csv full casts, warmest month, median cond_us_cm, depth <= 3 m"
+    },
+    {
+     "text": "262",
+     "source": "sonde_clean.csv full casts, warmest month, median cond_us_cm, depth >= 40 m"
+    },
+    {
+     "text": "357",
+     "source": "sonde_clean.csv full casts, number of casts"
+    },
+    {
+     "text": "0.98",
+     "source": "sonde_clean.csv full casts: median within-cast correlation, temp_c vs cond_us_cm"
+    },
+    {
+     "text": "25",
+     "source": "clean_sonde.py reference temperature, °C"
+    },
+    {
+     "text": "0.00",
+     "source": "sonde_clean.csv full casts: median within-cast correlation, temp_c vs spcond_us_cm"
+    },
+    {
+     "text": "324",
+     "source": "sonde_clean.csv full casts, warmest month, median spcond_us_cm, depth <= 3 m"
+    },
+    {
+     "text": "326",
+     "source": "sonde_clean.csv full casts, warmest month, median spcond_us_cm, depth >= 40 m"
+    },
+    {
+     "text": "313",
+     "source": "sonde_clean.csv full casts, June median spcond_us_cm"
+    },
+    {
+     "text": "315",
+     "source": "USGS_South_Platte.csv Specific_Cond_Mean, June median of daily means"
+    },
+    {
+     "text": "312",
+     "source": "sonde_clean.csv full casts, Aug 1-12 median spcond_us_cm"
+    },
+    {
+     "text": "307",
+     "source": "USGS_South_Platte.csv Specific_Cond_Mean, Aug 1-12 median of daily means"
+    },
+    {
+     "text": "247",
+     "source": "sonde_clean.csv full casts, June median cond_us_cm"
+    },
+    {
+     "text": "256",
+     "source": "sonde_clean.csv full casts, Aug 1-12 median cond_us_cm"
+    }
+   ]
+  }
+ ]
+}

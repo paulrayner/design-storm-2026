@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Denver's Water, in 3D</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="team-chat.css"><!-- Team addition -->
+<style>
+  :root {
+    --panel-bg: rgba(16, 20, 24, 0.92);
+    --panel-ink: #f2f4f6;
+    --panel-ink-2: #b8c0c8;
+    --panel-line: rgba(255, 255, 255, 0.14);
+    --c-reservoir: #3987e5;
+    --c-gage: #d95926;
+    --c-plant: #199e70;
+    --c-snotel: #ffffff;
+    --c-river: #6fc3ff;
+    --c-tunnel: #ffd166;
+  }
+  html, body { margin: 0; height: 100%; background: #101418; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  #panel {
+    position: absolute; top: 12px; left: 12px; z-index: 5;
+    width: 330px; max-height: calc(100% - 24px); overflow-y: auto;
+    background: var(--panel-bg); color: var(--panel-ink);
+    border: 1px solid var(--panel-line); border-radius: 12px;
+    padding: 14px 16px; box-sizing: border-box; backdrop-filter: blur(6px);
+  }
+  #panel h1 { font-size: 17px; margin: 0 0 2px; }
+  #panel .sub { font-size: 12px; color: var(--panel-ink-2); margin: 0 0 10px; }
+  #detail h2 { font-size: 15px; margin: 10px 0 2px; }
+  #detail .kind { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  #detail p { font-size: 13px; line-height: 1.45; color: var(--panel-ink); margin: 6px 0; }
+  #detail .note { font-size: 11.5px; color: var(--panel-ink-2); }
+  canvas.spark { width: 100%; height: 96px; display: block; margin-top: 6px; }
+  canvas.spark.tall { height: 132px; }
+  img.cam { width: 100%; display: block; border-radius: 8px; margin-top: 8px; }
+  .spark-label { font-size: 11px; color: var(--panel-ink-2); margin-top: 8px; }
+  .latest { font-size: 20px; font-weight: 600; margin: 2px 0 0; }
+  .latest small { font-size: 11px; font-weight: 400; color: var(--panel-ink-2); }
+  #legend { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; padding: 4px 9px; border-radius: 999px;
+    border: 1px solid var(--panel-line); cursor: pointer; user-select: none;
+    background: rgba(255, 255, 255, 0.05); color: var(--panel-ink);
+  }
+  .chip.off { opacity: 0.35; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.9); }
+  .chip .dot.sq { border-radius: 2px; }
+  .chip .dot.tri { width: 0; height: 0; border: none; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #fff; }
+  .chip .dot.dia { border-radius: 2px; transform: rotate(45deg); width: 9px; height: 9px; }
+  button.action {
+    width: 100%; margin-top: 10px; padding: 8px 10px; font-size: 13px;
+    border-radius: 8px; border: 1px solid var(--panel-line);
+    background: #1c5cab; color: #fff; cursor: pointer;
+  }
+  button.action.quiet { background: rgba(255, 255, 255, 0.08); }
+  #tourbar { display: none; gap: 8px; margin-top: 10px; }
+  #tourbar button { flex: 1; margin-top: 0; }
+  #replaybar { display: none; margin-top: 10px; }
+  #replaybar .time { font-size: 13px; font-weight: 600; margin: 2px 0 4px; }
+  #replaybar input[type=range] { width: 100%; margin: 2px 0 6px; }
+  #replaybar .row { display: flex; gap: 8px; }
+  #replaybar .row button { flex: 1; margin-top: 0; }
+  .replay-caption {
+    font-size: 12.5px; line-height: 1.4; margin-top: 8px; padding: 6px 9px;
+    background: rgba(57, 135, 229, 0.16); border-left: 3px solid #3987e5;
+    border-radius: 4px; min-height: 34px;
+  }
+  #attribution { font-size: 10px; color: var(--panel-ink-2); margin-top: 12px; line-height: 1.5; }
+  #attribution a { color: var(--panel-ink-2); }
+  #panel a { color: #6fc3ff; }
+  .gloss { border-bottom: 1px dotted rgba(255,255,255,0.55); cursor: help; }
+  .gloss-def { color: var(--panel-ink-2); font-size: 12px; }
+  details.howto { margin: 2px 0 10px; }
+  details.howto summary {
+    cursor: pointer; font-size: 12px; color: var(--panel-ink-2);
+    list-style: none; display: flex; align-items: center; gap: 5px;
+  }
+  details.howto summary::-webkit-details-marker { display: none; }
+  details.howto summary::before { content: "\25B8"; font-size: 9px; transition: transform 0.15s; }
+  details.howto[open] summary::before { transform: rotate(90deg); }
+  details.howto dl {
+    margin: 7px 0 0; display: grid; grid-template-columns: auto 1fr;
+    gap: 4px 10px; font-size: 12px; align-items: baseline;
+  }
+  details.howto dt { color: var(--panel-ink); white-space: nowrap; }
+  details.howto dd { margin: 0; color: var(--panel-ink-2); }
+  details.howto kbd {
+    font: inherit; font-size: 11px; padding: 0 4px; border-radius: 3px;
+    border: 1px solid var(--panel-line); background: rgba(255,255,255,0.07);
+  }
+  details.howto button.linky {
+    font: inherit; padding: 0; border: 0; background: none; cursor: pointer;
+    color: #6fc3ff; text-decoration: underline;
+  }
+  details.caveat { margin-top: 10px; font-size: 12.5px; }
+  details.caveat summary { cursor: pointer; color: var(--panel-ink-2); font-size: 12px; }
+  details.caveat p { margin: 6px 0 0; color: var(--panel-ink); line-height: 1.4; }
+  #tip {
+    position: absolute; z-index: 6; pointer-events: none; display: none;
+    background: var(--panel-bg); color: var(--panel-ink); font-size: 12px;
+    padding: 4px 8px; border-radius: 6px; border: 1px solid var(--panel-line);
+    transform: translate(12px, -50%); white-space: nowrap;
+  }
+  #panel.wide { width: 560px; }
+  .seg { display: flex; gap: 6px; margin: 10px 0 6px; }
+  .seg button {
+    flex: 1; font: inherit; font-size: 12px; padding: 5px 8px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.05); color: var(--panel-ink-2);
+  }
+  .seg button[aria-pressed="true"] { background: #1c5cab; color: #fff; border-color: #1c5cab; }
+  .param-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .param-row .chip[aria-pressed="false"] { opacity: 0.55; }
+  .param-row .chip[aria-pressed="true"] { border-color: #6fc3ff; background: rgba(111, 195, 255, 0.14); }
+  canvas.prof { width: 100%; display: block; touch-action: none; }
+  canvas.prof.heat { height: 220px; cursor: crosshair; }
+  canvas.prof.strip { height: 58px; }
+  .prof-read { font-size: 12px; min-height: 17px; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+  .prof-read b { font-weight: 600; }
+  .prof-key { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--panel-ink-2); margin-top: 4px; }
+  .prof-key .ramp { flex: 1; height: 8px; border-radius: 4px; }
+  .prof-key .gap { width: 14px; height: 8px; border-radius: 2px; border: 1px solid var(--panel-line);
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,0.14) 0 2px, transparent 2px 5px); }
+  ul.findings { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.45; }
+  ul.findings li { margin: 4px 0; }
+  /* Team addition: the chat window's styles are in team-chat.css */
+  button.ask-inline { width: 100%; margin-top: 10px; }
+  .prof-actions { display: flex; gap: 8px; }
+  .prof-actions button.ask-inline { flex: 1; width: auto; }
+  /* Team addition: the full prediction dashboard overlay (folded in from the root dashboard build) */
+  #dashboard-overlay {
+    position: absolute; inset: 0; z-index: 20; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(8, 10, 12, 0.55);
+  }
+  #dashboard-overlay.open { display: flex; }
+  #dashboard-panel {
+    position: relative; width: min(1080px, 92vw); height: min(860px, 88vh);
+    background: var(--panel-bg); border: 1px solid var(--panel-line); border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5); overflow: hidden;
+  }
+  #dashboard-frame { width: 100%; height: 100%; border: 0; display: block; }
+  #dashboard-close {
+    position: absolute; top: 10px; right: 10px; z-index: 21;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    background: var(--panel-bg); color: var(--panel-ink);
+    border: 1px solid var(--panel-line); font-size: 16px; line-height: 1;
+  }
+  @media (max-width: 640px) {
+    #panel, #panel.wide { width: calc(100% - 24px); max-height: 55%; }
+    #dashboard-panel { width: 96vw; height: 92vh; border-radius: 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="tip"></div>
+<div id="panel">
+  <h1>Denver&rsquo;s Water, in 3D</h1>
+  <p class="sub">The mountains, reservoirs, tunnels, and probes behind the tap. Click anything on the map to read about it.</p>
+  <details class="howto" open>
+    <summary>How to move around</summary>
+    <dl>
+      <dt>Pan</dt><dd>Drag with the left mouse button, or one finger on a touchscreen.</dd>
+      <dt>Zoom</dt><dd>Scroll, pinch, or the <kbd>+</kbd> and <kbd>&minus;</kbd> buttons at top right.</dd>
+      <dt>Rotate and tilt</dt><dd>Drag with the right mouse button, or hold <kbd>Ctrl</kbd> and drag. On a trackpad, drag with two fingers. The compass at top right does it too, and clicking the compass snaps back to north.</dd>
+      <dt>Lost?</dt><dd><button type="button" class="linky" id="view-reset">Snap back to the opening view</button>.</dd>
+    </dl>
+  </details>
+  <div id="legend"></div>
+  <div id="detail"></div>
+  <button class="action" id="tour-start">&#9992; Fly the water&rsquo;s path</button>
+  <button class="action quiet" id="replay-start">&#9928; Replay the Aug 14-15 storm</button>
+  <button class="action quiet" id="open-dashboard">&#128202; Full prediction dashboard</button>
+  <div id="replaybar">
+    <div class="time" id="replay-time"></div>
+    <input type="range" id="replay-slider" min="0" max="0" value="0">
+    <div class="row">
+      <button class="action" id="replay-play">Pause</button>
+      <button class="action quiet" id="replay-exit">Exit</button>
+    </div>
+    <div class="replay-caption" id="replay-caption"></div>
+    <div id="replay-charts"></div>
+  </div>
+  <div id="tourbar">
+    <button class="action quiet" id="tour-back">&larr; Back</button>
+    <button class="action" id="tour-next">Next &rarr;</button>
+    <button class="action quiet" id="tour-exit">Exit</button>
+  </div>
+  <div id="attribution">
+    Imagery &copy; Esri &amp; contributors &middot; Terrain: Mapzen/AWS &middot;
+    Live data: USGS &amp; USDA NRCS &middot; Boundaries: USGS NLDI &middot;
+    Pipelines &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> &middot;
+    Storm radar: NEXRAD archive via Iowa State Mesonet &middot;
+    Strontia sonde and Foothills influent lab data &copy; 2026 <a href="https://www.denverwater.org/about-us/how-we-operate/public-records" target="_blank" rel="noopener">Denver Water</a>,
+    provisional, provided as is, no warranty of any kind.
+    Built in the <a href="https://github.com/paulrayner/design-storm-2026" target="_blank" rel="noopener">Design Storm workspace</a>.
+    Full <a href="../../../data-terms.html" target="_blank" rel="noopener">data terms</a>.
+  </div>
+</div>
+<div id="dashboard-overlay">
+  <div id="dashboard-panel">
+    <button id="dashboard-close" aria-label="Close dashboard">&times;</button>
+    <iframe id="dashboard-frame" title="Full prediction dashboard"></iframe>
+  </div>
+</div>
+<!-- Team addition: the chat window is built by team-chat.js (answered via teams/team-education/chat_server.py) -->
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="strontia-core.js"></script><!-- Team addition: shared with strontia.html -->
+<script src="team-chat.js"></script><!-- Team addition: shared with strontia.html -->
+<script>
+"use strict";
+
+const KINDS = {
+  reservoir: { color: "#3987e5", label: "Reservoirs & dams", shape: "circle" },
+  gage:      { color: "#d95926", label: "River gages", shape: "triangle" },
+  snotel:    { color: "#ffffff", label: "Snow stations", shape: "diamond" },
+  plant:     { color: "#199e70", label: "Treatment plants", shape: "square" },
+};
+
+const HOME = { center: [-105.55, 39.45], zoom: 8.05, pitch: 55, bearing: -12 };
+
+const map = new maplibregl.Map({
+  container: "map",
+  center: HOME.center, zoom: HOME.zoom, pitch: HOME.pitch, bearing: HOME.bearing,
+  maxPitch: 72, attributionControl: false,
+  style: {
+    version: 8,
+    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+    sources: {
+      satellite: {
+        type: "raster", tileSize: 256, maxzoom: 18,
+        tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+        attribution: "Esri",
+      },
+      dem: {
+        type: "raster-dem", tileSize: 256, maxzoom: 13, encoding: "terrarium",
+        tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+      },
+    },
+    layers: [{ id: "satellite", type: "raster", source: "satellite" }],
+    sky: { "sky-color": "#88b8e0", "horizon-color": "#d8e8f0", "fog-color": "#c8d8e0",
+           "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.7 },
+  },
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+document.getElementById("view-reset").addEventListener("click", () => {
+  map.flyTo({ ...HOME, speed: 0.9 });
+});
+map.setTerrain === undefined || map.on("load", () => map.setTerrain({ source: "dem", exaggeration: 1.35 }));
+
+const state = { points: [], lines: [], byId: {}, hidden: new Set(), tourStep: -1 };
+
+function markerImage(shape, color) {
+  const s = 48, c = document.createElement("canvas");
+  c.width = s; c.height = s;
+  const g = c.getContext("2d");
+  g.strokeStyle = "rgba(20,26,32,0.9)"; g.lineWidth = 5; g.fillStyle = color;
+  g.beginPath();
+  if (shape === "circle") g.arc(s / 2, s / 2, 15, 0, Math.PI * 2);
+  if (shape === "square") g.rect(10, 10, s - 20, s - 20);
+  if (shape === "triangle") { g.moveTo(s / 2, 7); g.lineTo(s - 8, s - 10); g.lineTo(8, s - 10); g.closePath(); }
+  if (shape === "diamond") { g.moveTo(s / 2, 5); g.lineTo(s - 5, s / 2); g.lineTo(s / 2, s - 5); g.lineTo(5, s / 2); g.closePath(); }
+  g.stroke(); g.fill();
+  g.strokeStyle = "rgba(255,255,255,0.95)"; g.lineWidth = 2.5; g.stroke();
+  return g.getImageData(0, 0, s, s);
+}
+
+function pointFeatures() {
+  return {
+    type: "FeatureCollection",
+    features: state.points
+      .filter((p) => !state.hidden.has(p.kind))
+      .map((p) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [p.lon, p.lat] },
+        properties: { id: p.id, name: p.name, kind: p.kind },
+      })),
+  };
+}
+
+function lineFeatures(lines) {
+  return {
+    type: "FeatureCollection",
+    features: lines.map((l) => ({
+      type: "Feature",
+      geometry: { type: "LineString", coordinates: l.coords },
+      properties: { id: l.id, name: l.name },
+    })),
+  };
+}
+
+// This copy lives in teams/team-education/map/; the shared data sits at the repo root.
+const DATA_ROOT = "../../../";
+
+async function fetchJson(url) {
+  const r = await fetch(/^https?:/.test(url) ? url : DATA_ROOT + url);
+  if (!r.ok) throw new Error(url + " -> " + r.status);
+  return r.json();
+}
+
+async function loadEverything() {
+  const [system, basinSP, basinBlue, basinFraser, basinWF, riversMain, riversDown] =
+    await Promise.all([
+      fetchJson("water-system-3d/system.json"),
+      fetchJson("strontia-brief/basins/south-platte-above-strontia-06707525.json"),
+      fetchJson("strontia-brief/basins/blue-river-below-dillon-09050700.json"),
+      fetchJson("strontia-brief/basins/fraser-below-moffat-09023562.json"),
+      fetchJson("strontia-brief/basins/williams-fork-parshall-09037500.json"),
+      fetchJson("strontia-brief/basins/mainstem-flowlines-06707525.json"),
+      fetchJson("strontia-brief/basins/downstream-mainstem-06707525.json"),
+    ]);
+  state.points = system.points;
+  state.lines = system.lines;
+  system.points.forEach((p) => { state.byId[p.id] = p; });
+  system.lines.forEach((l) => { state.byId[l.id] = l; });
+  // Team addition: the depth-profile panel hangs off the dam marker (system.json is not regenerated).
+  if (state.byId["dam-strontia"]) state.byId["dam-strontia"].profile = true;
+
+  const basins = { type: "FeatureCollection",
+    features: [basinSP, basinBlue, basinFraser, basinWF].flatMap((b) => b.features) };
+  const rivers = { type: "FeatureCollection",
+    features: riversMain.features.concat(riversDown.features) };
+
+  map.addSource("basins", { type: "geojson", data: basins });
+  map.addSource("rivers", { type: "geojson", data: rivers });
+  map.addSource("tunnels", { type: "geojson", data: lineFeatures(system.lines) });
+  map.addSource("points", { type: "geojson", data: pointFeatures() });
+
+  map.addLayer({ id: "basin-line", type: "line", source: "basins",
+    paint: { "line-color": "rgba(255,255,255,0.55)", "line-width": 1.4, "line-dasharray": [1, 2] } });
+  map.addLayer({ id: "river-line", type: "line", source: "rivers",
+    paint: { "line-color": "#6fc3ff", "line-width": 2, "line-opacity": 0.9 } });
+  map.addLayer({ id: "tunnel-casing", type: "line", source: "tunnels",
+    paint: { "line-color": "rgba(16,20,24,0.85)", "line-width": 6 } });
+  map.addLayer({ id: "tunnel-line", type: "line", source: "tunnels",
+    paint: { "line-color": "#ffd166", "line-width": 2.6, "line-dasharray": [2.2, 1.6] } });
+
+  for (const [kind, spec] of Object.entries(KINDS))
+    map.addImage("marker-" + kind, markerImage(spec.shape, spec.color), { pixelRatio: 3 });
+
+  map.addLayer({ id: "points", type: "symbol", source: "points",
+    layout: {
+      "icon-image": ["concat", "marker-", ["get", "kind"]],
+      "icon-size": ["interpolate", ["linear"], ["zoom"], 7, 0.85, 11, 1.25],
+      "icon-allow-overlap": true,
+      "text-field": ["step", ["zoom"], "", 9.2, ["get", "name"]],
+      "text-font": ["Noto Sans Regular"],
+      "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top",
+      "text-optional": true,
+    },
+    paint: { "text-color": "#ffffff", "text-halo-color": "rgba(16,20,24,0.9)", "text-halo-width": 1.4 } });
+
+  wireInteraction();
+  buildLegend();
+  showIntro();
+}
+
+function wireInteraction() {
+  const tip = document.getElementById("tip");
+  map.on("mousemove", "points", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    tip.textContent = e.features[0].properties.name;
+    tip.style.display = "block";
+    tip.style.left = e.point.x + "px";
+    tip.style.top = e.point.y + "px";
+  });
+  map.on("mouseleave", "points", () => {
+    map.getCanvas().style.cursor = "";
+    tip.style.display = "none";
+  });
+  map.on("click", "points", (e) => showDetail(state.byId[e.features[0].properties.id]));
+  map.on("click", "tunnel-line", (e) => {
+    const line = state.byId[e.features[0].properties.id];
+    if (line) showDetail(line);
+  });
+}
+
+function buildLegend() {
+  const legend = document.getElementById("legend");
+  const shapeClass = { circle: "", square: "sq", triangle: "tri", diamond: "dia" };
+  for (const [kind, spec] of Object.entries(KINDS)) {
+    const count = state.points.filter((p) => p.kind === kind).length;
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    const dot = `<span class="dot ${shapeClass[spec.shape]}" style="${spec.shape === "triangle" ? "border-bottom-color:" + spec.color : "background:" + spec.color}"></span>`;
+    chip.innerHTML = `${dot} ${spec.label} (${count})`;
+    chip.onclick = () => {
+      state.hidden.has(kind) ? state.hidden.delete(kind) : state.hidden.add(kind);
+      chip.classList.toggle("off");
+      map.getSource("points").setData(pointFeatures());
+    };
+    legend.appendChild(chip);
+  }
+}
+
+const KIND_INTRO = {
+  reservoir: "Reservoir / dam", gage: "River gage",
+  snotel: "Snow station (SNOTEL)", plant: "Treatment plant", tunnel: "Tunnel / conduit",
+};
+
+const GLOSSARY = {
+  "FNU": "Formazin Nephelometric Units: how cloudy the water is, measured by bouncing light off suspended particles. A clear mountain stream reads 1-5; the August storm hit 329.",
+  "turbidity": "Cloudiness: how much suspended sediment and debris the water carries. The single most important early warning for a treatment plant.",
+  "conductance": "How easily the water conducts electricity, which tracks dissolved minerals. It changes slowly, so a sudden jump usually means the sensor glitched, not the river.",
+  "acre-feet": "The West's water unit: one acre flooded a foot deep, about 326,000 gallons, roughly what two Denver households use in a year.",
+  "cubic ft/s": "Cubic feet per second, the standard river-flow unit. One cfs is about a basketball of water passing every second.",
+  "snow water equivalent": "How much water you would get by melting the snowpack where it sits. What matters for supply is not snow depth but the water in it.",
+  "water year": "Hydrologists start the year on Oct 1, when the snowpack starts building, so one winter's snow and the runoff it becomes stay in the same year.",
+  "alkalinity": "The water's capacity to buffer acids. Treatment chemistry (coagulants are acidic) behaves differently in low-alkalinity water.",
+  "TOC": "Total organic carbon: dissolved and suspended organic matter. It reacts with chlorine to form regulated byproducts, so the plant doses around it.",
+  "provisional": "USGS's label for fresh, unreviewed data. Every real-time reading carries it, so it cannot tell you which readings to distrust.",
+  "soft sensor": "A model that predicts an expensive lab measurement from cheap continuous ones. The machine learning is the tool, not the point.",
+  "pH": "How acidic or alkaline the water is. Treatment chemistry is sensitive to it, and it shifts with what the watershed sends down.",
+  "dissolved oxygen": "Oxygen held in the water. Tracks temperature, algae, and mixing; another cheap continuous signal about the river's state.",
+  "organic carbon": "Dissolved dead plant material: leaves, soil, forest litter washed in by rain and snowmelt. Harmless itself, but it reacts with the chlorine used for disinfection, so the plant must strip it first.",
+};
+
+const CAVEATS = {
+  snotel: "A snow pillow weighs whatever sits on it. Wind scours snow off or drifts extra on, an ice crust can bridge over the pillow so new snow never presses down, and a thawing sensor can spike absurdly for a day (this station's record shows one). Review catches most of it, later.",
+  gage: "Turbidity and conductance sensors foul with algae and silt. Ice, debris, or a shifted channel skew stage-based flow readings. And a bad 15-minute value carries only the routine provisional flag, the same one every fresh reading gets. The August 14 conductance blip is exhibit A.",
+  reservoir: "Storage is not weighed directly: a sensor reads the water surface elevation and a rating table converts it to volume. The raw state feed occasionally contains impossible values (single days claiming millions of acre-feet); this map filters the worst of them.",
+};
+
+function annotateGlossary(element) {
+  const target = element || document.getElementById("detail");
+  let html = target.innerHTML;
+  for (const term of Object.keys(GLOSSARY)) {
+    if (document.querySelector(`#panel [data-term="${term}"]`)) continue;
+    if (html.includes(`data-term="${term}"`)) continue;
+    const pattern = new RegExp(`(?<![\\w>])${term.replace("/", "\\/")}(?![\\w=-])`);
+    html = html.replace(pattern, `<span class="gloss" data-term="${term}">${term}</span>`);
+  }
+  target.innerHTML = html;
+}
+
+document.getElementById("panel").addEventListener("click", (e) => {
+  const term = e.target.closest(".gloss");
+  if (!term) return;
+  const next = term.nextElementSibling;
+  if (next && next.classList.contains("gloss-def")) { next.remove(); return; }
+  const def = document.createElement("span");
+  def.className = "gloss-def";
+  def.textContent = " (" + GLOSSARY[term.dataset.term] + ") ";
+  term.after(def);
+});
+
+function showIntro() {
+  document.getElementById("detail").innerHTML = `
+    <p>Denver draws its water from about 4,000 square miles of Rocky Mountain
+    terrain, on <em>both</em> sides of the Continental Divide. Snow falls,
+    melts, is caught in mountain reservoirs, and is moved under the divide
+    through tunnels to treatment plants at the edge of the city.</p>
+    <p class="note">White diamonds weigh the snowpack. Orange triangles measure
+    the rivers. Blue circles store the water. Aqua squares treat it. The dashed
+    yellow lines are the tunnels that defy the Continental Divide.
+    Dotted-underlined terms explain themselves when clicked.</p>`;
+  annotateGlossary();
+}
+
+function showDetail(item) {
+  const detail = document.getElementById("detail");
+  const kind = item.kind || "tunnel";
+  const color = (KINDS[kind] || { color: "#ffd166" }).color;
+  detail.innerHTML = `
+    <h2>${item.name}</h2>
+    <div class="kind" style="color:${color}">${KIND_INTRO[kind] || kind}</div>
+    <p>${item.blurb || ""}</p>
+    ${item.elevation_ft ? `<p class="note">Elevation ${Math.round(item.elevation_ft).toLocaleString()} ft</p>` : ""}
+    <div id="chartbox"></div>
+    <div id="influentbox"></div>
+    <div id="profilebox"></div>
+    ${CAVEATS[item.kind] ? `<details class="caveat"><summary>What can go wrong with this reading</summary><p>${CAVEATS[item.kind]}</p></details>` : ""}
+    ${(item.photos || []).map((p) => `
+      <a href="${p.page}" target="_blank" rel="noopener"><img class="cam" src="${p.url}" alt="${p.label}"></a>
+      <div class="note">${p.label} &middot; live USGS camera, updates every few minutes</div>`).join("")}`;
+  annotateGlossary();
+  if (item.chart) renderChart(item);
+  if (item.influent) renderInfluent();
+  document.getElementById("panel").classList.toggle("wide", !!item.profile);
+  if (item.profile) renderProfile();
+  if (item.lat) flyToPoint(item, false);
+}
+
+function flyToPoint(item, tight) {
+  map.flyTo({ center: [item.lon, item.lat], zoom: Math.max(map.getZoom(), tight ? 11.5 : 9.5),
+              pitch: 60, speed: 0.9 });
+}
+
+async function renderChart(item) {
+  const box = document.getElementById("chartbox");
+  box.innerHTML = `<div class="spark-label">${item.chart.label} &middot; loading&hellip;</div>`;
+  const FETCHERS = { usgs: fetchUsgs, snotel: fetchSnotel, dwr: fetchDwrStorage };
+  const RANGE_NOTES = { usgs: "last 7 days", snotel: "this water year (since Oct 1)", dwr: "last 12 months" };
+  try {
+    const series = await FETCHERS[item.chart.type](item.chart);
+    if (!series.length) { box.innerHTML = `<div class="spark-label">No recent data published for this station.</div>`; return; }
+    const latest = series[series.length - 1];
+    const headline = item.capacity_af
+      ? `${Math.round(100 * latest.v / item.capacity_af)}% full <small>${formatValue(latest.v)} of ${item.capacity_af.toLocaleString()} acre-feet</small>`
+      : `${formatValue(latest.v)} <small>latest reading</small>`;
+    box.innerHTML = `
+      <div class="spark-label">${item.chart.label} &middot; ${RANGE_NOTES[item.chart.type]}</div>
+      <div class="latest">${headline}</div>
+      <canvas class="spark"></canvas>
+      <div id="overlaybox"></div>`;
+    annotateGlossary(box);
+    drawSpark(box.querySelector("canvas"), series, KINDS[item.kind].color === "#ffffff" ? "#6fc3ff" : KINDS[item.kind].color);
+    if (item.chart.type === "dwr" || item.chart.type === "snotel") renderOverlay(item, series);
+  } catch (err) {
+    box.innerHTML = `<div class="spark-label">Live data is unreachable right now (${err.message}).</div>`;
+  }
+}
+
+function formatValue(v) {
+  return Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (Math.round(v * 100) / 100).toString();
+}
+
+async function fetchUsgs(chart) {
+  const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${chart.site}&parameterCd=${chart.param}&period=P7D`;
+  const data = await fetchJson(url);
+  const ts = data.value.timeSeries[0];
+  if (!ts) return [];
+  return ts.values[0].value
+    .map((r) => ({ t: r.dateTime, v: parseFloat(r.value) }))
+    .filter((r) => isFinite(r.v) && r.v > -999);
+}
+
+function waterYearStart() {
+  const now = new Date();
+  const year = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${year}-10-01`;
+}
+
+async function fetchSnotel(chart) {
+  const end = new Date().toISOString().slice(0, 10);
+  const url = "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data" +
+    `?stationTriplets=${chart.triplet}&elements=WTEQ&duration=DAILY` +
+    `&beginDate=${waterYearStart()}&endDate=${end}`;
+  const data = await fetchJson(url);
+  const values = data[0] && data[0].data[0] ? data[0].data[0].values : [];
+  return values.filter((r) => r.value !== null && isFinite(r.value))
+               .map((r) => ({ t: r.date, v: r.value }));
+}
+
+function parseDate(t) {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(t) ? t + "T12:00:00" : t);
+}
+
+function formatDate(t) {
+  return parseDate(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+const MAX_AXIS_TICKS = 7;
+
+function axisTicks(series) {
+  const days = (parseDate(series[series.length - 1].t) - parseDate(series[0].t)) / 86400000;
+  const yearly = days > 500, monthly = days > 60 && !yearly;
+  const boundary = (d, prev) => yearly ? d.getFullYear() !== prev.getFullYear()
+    : monthly ? d.getMonth() !== prev.getMonth() : d.getDate() !== prev.getDate();
+  const label = (d) => yearly ? String(d.getFullYear())
+    : d.toLocaleDateString(undefined, monthly ? { month: "short" } : { weekday: "short" });
+  const ticks = [];
+  for (let i = 1; i < series.length; i++) {
+    const d = parseDate(series[i].t);
+    if (boundary(d, parseDate(series[i - 1].t))) ticks.push({ i, text: label(d) });
+  }
+  const step = Math.ceil(ticks.length / MAX_AXIS_TICKS);
+  return ticks.filter((_, n) => n % step === 0);
+}
+
+async function renderInfluent() {
+  const box = document.getElementById("influentbox");
+  try {
+    const influent = await fetchJson("water-system-3d/foothills-influent.json");
+    box.innerHTML = `
+      <p>The plant has to react to whatever the river sends down the canyon.
+      These are two signals it wishes it could see coming: organic carbon
+      decides how hard the treatment chemistry must work, and alkalinity
+      decides how that chemistry behaves. Both need a lab, so they arrive as
+      history, never as forecast. What arrives here tracks the gage above
+      Strontia from a day or two earlier (the water itself takes about four
+      hours; the reservoir's mixing stretches the signal), and Denver Water's
+      answer is a soft sensor: a model that predicts these lab numbers from the
+      cheap upstream probes before the water arrives. That model is the design
+      storm problem.</p>
+      <div class="spark-label">Organic carbon arriving at the plant (TOC), mg/L</div>
+      <canvas class="spark" id="influent-toc"></canvas>
+      <div class="spark-label">Alkalinity of the arriving water, mg/L</div>
+      <canvas class="spark" id="influent-alk"></canvas>
+      <div class="spark-label">Foothills influent record, Apr 2022 to Aug 2026, from the design storm dataset. Hover for dates; the spring-runoff rhythm is the pattern to notice.</div>`;
+    annotateGlossary(box);
+    drawSpark(document.getElementById("influent-toc"), influent.toc, "#199e70");
+    drawSpark(document.getElementById("influent-alk"), influent.alk, "#3987e5");
+  } catch (err) {
+    box.innerHTML = `<div class="spark-label">Influent record unavailable (${err.message}).</div>`;
+  }
+}
+
+// ---- Team addition: Strontia Springs depth profile (teams/team-education) -------------------------
+// Data: strontia-profile.json next to this page, built by analysis/build_profile_json.py.
+
+// The ramp and drawing primitives live in strontia-core.js (shared with strontia.html).
+const PROFILE_PARAMS = ["temp_c", "turb_ntu", "spcond_us_cm", "odo_mg_l", "chl_ug_l"];
+const profileState = { view: "storm", param: "turb_ntu" };
+
+async function loadProfile() {
+  if (!state.profile) {
+    const r = await fetch("strontia-profile.json");   // lives beside this page, not under DATA_ROOT
+    if (!r.ok) throw new Error("strontia-profile.json -> " + r.status);
+    state.profile = await r.json();
+  }
+  return state.profile;
+}
+
+async function renderProfile() {
+  const box = document.getElementById("profilebox");
+  box.innerHTML = `<div class="spark-label">Depth profile &middot; loading&hellip;</div>`;
+  let P;
+  try { P = await loadProfile(); } catch (err) {
+    box.innerHTML = `<div class="spark-label">Depth profile unavailable (${err.message}).</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <h2 style="margin-top:14px">Inside the reservoir, by depth</h2>
+    <p class="prof-intro">A sonde in the reservoir sweeps from 44 m deep up to the surface every six hours.
+    Stack those sweeps side by side and you get a scan of the water column: each column
+    of pixels is one moment, each row one depth, surface at the top.</p>
+    <div class="prof-actions">
+      <button type="button" class="action quiet ask-inline" id="prof-ask">&#128172; Ask Claude about this picture</button>
+      <button type="button" class="action quiet ask-inline" id="prof-popout" title="Opens a page with this picture, lessons and more views">&#8599; Open in its own window</button>
+    </div>
+    <div class="seg" role="group" aria-label="Time range">
+      <button type="button" data-view="storm">Aug 14-15 storm</button>
+      <button type="button" data-view="season">Whole season</button>
+    </div>
+    <div class="param-row" role="group" aria-label="Parameter">
+      ${PROFILE_PARAMS.map((k) => `<button type="button" class="chip" data-param="${k}">${P.params[k].label}</button>`).join("")}
+    </div>
+    <div id="prof-gage-wrap">
+      <div class="spark-label">River gage above the reservoir: turbidity, FNU (log scale)</div>
+      <canvas class="prof strip" id="prof-gage"></canvas>
+    </div>
+    <div class="spark-label" id="prof-title"></div>
+    <canvas class="prof heat" id="prof-heat" aria-label="Depth by time heatmap"></canvas>
+    <div class="prof-read" id="prof-read">&nbsp;</div>
+    <div class="prof-key"><span id="prof-lo"></span><span class="ramp" id="prof-ramp"></span><span id="prof-hi"></span>
+      <span class="gap"></span><span>no reading</span></div>
+    <div id="prof-toc-wrap">
+      <div class="spark-label" style="margin-top:10px">Foothills plant: organic carbon (TOC) in arriving water, mg/L, daily lab value</div>
+      <canvas class="prof strip" id="prof-toc"></canvas>
+    </div>
+    <ul class="findings">${P.findings.map((f) => `<li>${f}</li>`).join("")}</ul>
+    <details class="caveat"><summary>What this can and cannot tell you</summary>
+      ${P.caveats.map((c) => `<p>${c}</p>`).join("")}</details>
+    <div class="note" style="margin-top:8px">${P.terms}
+      Method and evidence: teams/team-education/FINDINGS.md.</div>`;
+  // Glossary links only in the prose, so control labels stay plain.
+  annotateGlossary(box.querySelector(".prof-intro"));
+  annotateGlossary(box.querySelector("ul.findings"));
+  document.getElementById("prof-ask").onclick = () => TeamChat.open();
+  document.getElementById("prof-popout").onclick = () => window.open("strontia.html", "strontia");
+  box.querySelectorAll(".seg button").forEach((b) => b.onclick = () => { profileState.view = b.dataset.view; drawProfile(); });
+  box.querySelectorAll(".param-row button").forEach((b) => b.onclick = () => { profileState.param = b.dataset.param; drawProfile(); });
+  drawProfile();
+}
+
+function drawProfile() {
+  const P = state.profile, box = document.getElementById("profilebox");
+  if (!P || !box) return;
+  const view = P.views[profileState.view], key = profileState.param;
+  const meta = P.params[key], data = view.params[key];
+  box.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === profileState.view));
+  box.querySelectorAll(".param-row button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.param === key));
+  const storm = profileState.view === "storm";
+  document.getElementById("prof-gage-wrap").style.display = storm ? "" : "none";
+  document.getElementById("prof-toc-wrap").style.display = storm ? "" : "none";
+  document.getElementById("prof-title").textContent =
+    `${meta.label}, ${meta.units}${meta.log ? " (log scale)" : ""} · ${view.label}`;
+
+  const heat = document.getElementById("prof-heat");
+  const geo = drawHeat(heat, P, profileState.view, key);
+  const { nT, nZ, pw, ph } = geo;
+
+  // colour key
+  document.getElementById("prof-ramp").style.background = `linear-gradient(90deg, ${PROFILE_RAMP.join(",")})`;
+  document.getElementById("prof-lo").textContent = fmtVal(data.domain[0], meta);
+  document.getElementById("prof-hi").textContent = fmtVal(data.domain[1], meta);
+
+  // hover / touch readout
+  const read = document.getElementById("prof-read");
+  const idle = storm
+    ? "Hover or touch the picture to read a value. Dashed line: gage peak. Dotted: sensor serviced."
+    : "Hover or touch the picture to read a value. Dotted lines: sensor serviced.";
+  read.textContent = idle;
+  const onMove = (e) => {
+    const rect = heat.getBoundingClientRect();
+    const px = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const py = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    const i = Math.floor((px - PROF_PAD.left) / pw * nT), j = Math.floor((py - PROF_PAD.top) / ph * nZ);
+    if (i < 0 || i >= nT || j < 0 || j >= nZ) { read.textContent = idle; return; }
+    const v = data.values[i * nZ + j];
+    read.innerHTML = `<b>${fmtWhen(profileTime(view, i), true)}</b> · ${P.depths[j]} m deep · <b>${fmtVal(v, meta)}</b>`;
+    state.profileHover = `${meta.label} ${read.textContent}`;
+  };
+  heat.onmousemove = onMove; heat.ontouchmove = onMove; heat.ontouchstart = onMove;
+  heat.onmouseleave = () => { read.textContent = idle; };
+
+  if (storm) {
+    drawGageStrip(document.getElementById("prof-gage"), P, geo.X);
+    drawTocStrip(document.getElementById("prof-toc"), P, geo.X);
+  }
+}
+
+window.addEventListener("resize", () => { if (document.getElementById("prof-heat")) drawProfile(); });
+// The tour and the storm replay rewrite the detail area directly; drop the wide layout with the panel.
+new MutationObserver(() => {
+  if (!document.getElementById("profilebox")) document.getElementById("panel").classList.remove("wide");
+}).observe(document.getElementById("detail"), { childList: true });
+// ---- end team addition ------------------------------------------------------------------------
+
+// ---- Team addition: chat with Claude about the map -------------------------------------------
+// The chat window itself is team-chat.js (shared with strontia.html); this page supplies its
+// suggested questions and the note of what the viewer is looking at.
+// Suggested questions, by topic. Each is answerable from the documents chat_server.py sends.
+const CHAT_QUESTIONS = {
+  picture: [
+    "What am I looking at in this picture?",
+    "What do the colours mean on the depth picture?",
+    "Why are there grey hatched stripes in the picture?",
+    "What are the dotted and dashed lines on the picture?",
+    "What is a profiling sonde, and how does it measure the reservoir?",
+    "How often does the sonde measure, and how deep does it go?",
+    "How is the picture filled in between the sonde's measurements?",
+    "Why is turbidity shown on a log scale?",
+  ],
+  storm: [
+    "Explain the turbidity during the storm, step by step.",
+    "When did the storm reach the river gage, and how muddy was the river?",
+    "How long did the muddy water take to show up in the reservoir?",
+    "Why did the muddy water stay in the middle instead of at the surface?",
+    "What is an interflow?",
+    "Why did the storm layer sink over the following days?",
+    "Was the storm layer still there when the data ends?",
+    "Why is there a faint layer on Aug 14, before the main storm arrived?",
+    "Would you have noticed the storm from the reservoir's surface?",
+    "What happened to conductance in the storm water, and why does it matter?",
+    "How much rain fell around the storm?",
+    "Why did river flow barely rise even though the water was so muddy?",
+    "What was the odd gage reading at 1 pm on Aug 14?",
+    "How precise are the storm's arrival times?",
+  ],
+  plant: [
+    "Did the storm affect the drinking water plant?",
+    "What is TOC, and why does the plant care about it?",
+    "How unusual was the TOC jump on Aug 16?",
+    "Why didn't alkalinity change during the storm?",
+    "Why does the depth of the Foothills intake matter so much?",
+    "How much warning could operators get from the river gage for a storm like this?",
+    "How could the reservoir sonde help operators during the next storm?",
+    "Where does the Foothills plant get its water?",
+  ],
+  season: [
+    "What does it mean that the reservoir was stratified?",
+    "When did the reservoir stratify this year?",
+    "How much warmer was the surface than the bottom this summer?",
+    "Did oxygen at the bottom of the reservoir ever run low?",
+    "What happened to the deep water in early August?",
+    "Why did cold river water sink to the bottom in early August but the storm water stay mid-depth?",
+    "Was there an algae bloom this summer?",
+    "What does the chlorophyll reading tell us here?",
+  ],
+  data: [
+    "How was the sonde data cleaned?",
+    "Why were readings deeper than 45 m thrown out?",
+    "What was wrong with the conductivity readings, and how was it fixed?",
+    "What is sensor servicing, and how does it show up in the data?",
+    "Why can't ORP be compared across the season?",
+    "How do we know the sonde's 'vertical position' is depth below the surface?",
+    "What was the fill-in experiment, and did it help?",
+    "What is a lockbox, and why keep one?",
+    "What questions does the team still have for Denver Water?",
+    "What can't this data tell us?",
+  ],
+  terms: [
+    "What is turbidity, and what do NTU and FNU mean?",
+    "What is specific conductance?",
+    "What does dissolved oxygen tell us about a reservoir?",
+    "What is a thermocline?",
+  ],
+};
+function chatContext() {
+  const bits = [];
+  const title = document.querySelector("#detail h2");
+  if (title) bits.push(`the panel shows "${title.textContent}"`);
+  if (document.getElementById("prof-heat") && state.profile) {
+    const p = state.profile.params[profileState.param];
+    const view = state.profile.views[profileState.view], dom = view.params[profileState.param].domain;
+    bits.push(`the depth picture is on the ${profileState.view === "storm" ? "Aug 10-19 storm window" : "whole season"}, showing ${p.label}`);
+    bits.push(`its colour scale runs from dark navy (low, ${fmtVal(dom[0], p)}) to near-white (high, ${fmtVal(dom[1], p)})` +
+      `${p.log ? " on a log scale" : ""}; grey hatching means no reading; a yellow dashed line marks the river gage peak and dotted lines mark sensor servicing`);
+    if (state.profileHover) bits.push(`the viewer last hovered: ${state.profileHover}`);
+  }
+  return bits.join("; ");
+}
+
+TeamChat.mount({
+  questions: CHAT_QUESTIONS,
+  context: chatContext,
+  title: "Ask about the reservoir",
+  openLabel: "&#128172; Ask about this",
+  placeholder: "Ask anything about the storm, the reservoir, or a term&hellip;",
+  fine: "Answered by Claude through your local Claude Code, from this team's findings. It can be wrong; the evidence is in FINDINGS.md. Readings are provisional.",
+  intro: () => `<p>Ask me anything about this map's reservoir picture:
+      what it shows, what a term means, or how the storm moved through the water.
+      Not sure where to start? Try one of these.</p>`,
+});
+// ---- end team addition ------------------------------------------------------------------------
+
+async function fetchDwrStorage(chart) {
+  const end = new Date().toISOString().slice(0, 10);
+  const start = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+  const url = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/" +
+    `?format=json&abbrev=${chart.abbrev}&parameter=STORAGE&startDate=${start}&endDate=${end}&pageSize=400`;
+  const data = await fetchJson(url);
+  return (data.ResultList || [])
+    .map((r) => ({ t: r.measDate, v: r.measValue }))
+    .filter((r) => isFinite(r.v));
+}
+
+async function loadStorageHistory() {
+  if (!state.storageHistory)
+    state.storageHistory = await fetchJson("water-system-3d/storage-history.json");
+  return state.storageHistory;
+}
+
+async function loadSnotelHistory() {
+  if (!state.snotelHistory)
+    state.snotelHistory = await fetchJson("water-system-3d/snotel-history.json");
+  return state.snotelHistory;
+}
+
+function dayOfWaterYear(d) {
+  const start = new Date(d.getFullYear() - (d.getMonth() >= 9 ? 0 : 1), 9, 1);
+  return Math.round((d - start) / 86400000);
+}
+
+async function renderOverlay(item, currentSeries) {
+  const box = document.getElementById("overlaybox");
+  const snow = item.chart.type === "snotel";
+  try {
+    const history = snow
+      ? (await loadSnotelHistory()).stations[item.chart.triplet]
+      : (await loadStorageHistory()).reservoirs[item.chart.abbrev];
+    if (!history || !history.worst) return;
+    const years = Object.keys(history.years);
+    const worstYear = new Date((history.worst.label_date || history.worst.min_date) + "T12:00:00").getFullYear();
+    const worstNote = snow
+      ? `The labeled year, ${worstYear}, had the weakest snowpack on record here.`
+      : `The labeled low is ${worstYear}.`;
+    box.innerHTML = `
+      <div class="spark-label" style="margin-top:12px">Every ${snow ? "winter" : "water year"} on record (Oct through Sep)</div>
+      <canvas class="spark tall"></canvas>
+      <div class="spark-label">Grey: each year since ${years[0]}. Dashed: median.
+        Blue: the current water year. ${worstNote}</div>`;
+    drawOverlay(box.querySelector("canvas"), history, currentSeries, snow);
+  } catch (err) {
+    box.innerHTML = `<div class="spark-label">Historical overlay unavailable (${err.message}).</div>`;
+  }
+}
+
+const WY_MONTH_TICKS = [[0, "Oct"], [61, "Dec"], [123, "Feb"], [183, "Apr"], [244, "Jun"], [305, "Aug"]];
+
+function drawOverlay(canvas, history, currentSeries, fullDomain = false) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 8, bottom: 15, left: 2, right: 44 };
+  const traces = Object.values(history.years);
+  const anchorValues = (fullDomain
+    ? Object.values(history.years).flat()
+    : [history.median, history.years[String(history.worst.wy)] || []].flat())
+    .filter((v) => v !== null)
+    .concat(currentSeries.map((d) => d.v));
+  const min = Math.min(...anchorValues), max = Math.max(...anchorValues);
+  const span = max - min || 1;
+  const x = (i) => pad.left + (i / 365) * (w - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - min) / span) * (h - pad.top - pad.bottom);
+  g.save();
+  g.beginPath();
+  g.rect(pad.left, pad.top, w - pad.left - pad.right, h - pad.top - pad.bottom);
+  g.clip();
+
+  function polyline(values, toIndex) {
+    g.beginPath();
+    let pen = false;
+    values.forEach((v, i) => {
+      if (v === null || !isFinite(v)) { pen = false; return; }
+      const px = x(toIndex ? toIndex(i) : i), py = y(v);
+      pen ? g.lineTo(px, py) : g.moveTo(px, py);
+      pen = true;
+    });
+    g.stroke();
+  }
+
+  g.lineWidth = 1; g.strokeStyle = "rgba(255,255,255,0.16)";
+  for (const trace of traces) polyline(trace);
+  const worst = history.years[String(history.worst.wy)];
+  if (worst) { g.strokeStyle = "rgba(255,209,102,0.85)"; g.lineWidth = 1.4; polyline(worst); }
+  g.strokeStyle = "rgba(255,255,255,0.75)"; g.lineWidth = 1.4; g.setLineDash([4, 3]);
+  polyline(history.median);
+  g.setLineDash([]);
+  const nowWY = dayOfWaterYear(new Date());
+  const current = currentSeries.map((d) => ({ i: dayOfWaterYear(parseDate(d.t)), v: d.v }))
+    .filter((d) => d.i <= nowWY);
+  g.strokeStyle = "#3987e5"; g.lineWidth = 2.4;
+  polyline(current.map((d) => d.v), (i) => current[i].i);
+  g.restore();
+  g.fillStyle = "rgba(184,192,200,0.95)"; g.font = "10px -apple-system, sans-serif";
+  g.textAlign = "left";
+  g.fillText(formatValue(max), w - pad.right + 4, y(max) + 4);
+  g.fillText(formatValue(min), w - pad.right + 4, y(min) + 4);
+  g.textAlign = "center";
+  for (const [i, label] of WY_MONTH_TICKS) g.fillText(label, Math.max(x(i), 12), h - 3);
+  if (worst) {
+    const lowIndex = history.worst.label_i
+      ?? worst.reduce((best, v, i) => (v !== null && (worst[best] === null || v < worst[best]) ? i : best), 0);
+    const worstLabel = new Date((history.worst.label_date || history.worst.min_date) + "T12:00:00").getFullYear();
+    g.fillStyle = "rgba(255,209,102,0.95)";
+    g.fillText(String(worstLabel), x(lowIndex), Math.min(h - pad.bottom - 4, y(worst[lowIndex]) + 12));
+  }
+}
+
+function drawSpark(canvas, series, color, cursor = -1) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * ratio; canvas.height = h * ratio;
+  const g = canvas.getContext("2d");
+  g.scale(ratio, ratio);
+  const pad = { top: 16, bottom: 15, left: 2, right: 44 };
+  const values = series.map((d) => d.v);
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min || 1;
+  const last = series.length - 1;
+  const x = (i) => pad.left + (i / (last || 1)) * (w - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - min) / span) * (h - pad.top - pad.bottom);
+
+  function render(highlight) {
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = "rgba(255,255,255,0.15)"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(pad.left, y(min)); g.lineTo(w - pad.right, y(min)); g.stroke();
+    g.strokeStyle = color; g.lineWidth = 2; g.lineJoin = "round"; g.beginPath();
+    series.forEach((d, i) => (i === 0 ? g.moveTo(x(i), y(d.v)) : g.lineTo(x(i), y(d.v))));
+    g.stroke();
+    g.fillStyle = "rgba(184,192,200,0.95)"; g.font = "10px -apple-system, sans-serif";
+    g.textAlign = "left";
+    g.fillText(formatValue(max), w - pad.right + 4, y(max) + 4);
+    g.fillText(formatValue(min), w - pad.right + 4, y(min) + 4);
+    g.textAlign = "center";
+    for (const tick of axisTicks(series)) g.fillText(tick.text, x(tick.i), h - 3);
+    if (highlight < 0) return;
+    const d = series[highlight];
+    g.strokeStyle = "rgba(255,255,255,0.45)";
+    g.beginPath(); g.moveTo(x(highlight), pad.top); g.lineTo(x(highlight), h - pad.bottom); g.stroke();
+    g.fillStyle = color;
+    g.beginPath(); g.arc(x(highlight), y(d.v), 3, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#f2f4f6";
+    g.textAlign = highlight > last / 2 ? "right" : "left";
+    g.fillText(`${formatDate(d.t)} · ${formatValue(d.v)}`, x(highlight) + (highlight > last / 2 ? -6 : 6), 10);
+  }
+
+  render(cursor);
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (e.clientX - rect.left - pad.left) / (w - pad.left - pad.right);
+    render(Math.max(0, Math.min(last, Math.round(fraction * last))));
+  };
+  canvas.onmouseleave = () => render(cursor);
+}
+
+const TOUR = [
+  { view: HOME,
+    title: "Where a city keeps its water",
+    text: "Everything Denver drinks starts as mountain snow inside these dashed basin outlines, on both sides of the Continental Divide. Follow one drop." },
+  { id: "sntl-938", zoom: 11, pitch: 62,
+    text: "It starts as snow. This pillow at Buckskin Joe, 11,160 ft up, weighs the snowpack all winter; its melt feeds the South Platte. Most of Denver's water begins this way, with a smaller share arriving as rain." },
+  { id: "res-dillon", zoom: 10.6, pitch: 58, bearing: 25,
+    text: "Snowmelt on the WEST side of the divide fills Dillon Reservoir, Denver Water's biggest bucket. Left alone, this water would flow to the Pacific." },
+  { id: "roberts", center: [-105.85, 39.55], zoom: 9.2, pitch: 55, bearing: 60,
+    text: "Instead it takes the Roberts Tunnel: 23 miles straight under the Continental Divide, from Dillon to the North Fork of the South Platte." },
+  { id: "gage-06702500", zoom: 11, pitch: 60,
+    text: "At Grant, tunnel water pours into the North Fork. This gage watches the river swell with borrowed Blue River water." },
+  { id: "gage-06707525", zoom: 11.2, pitch: 60,
+    text: "Everything converges here: the gage above Strontia Springs Reservoir. It reads turbidity, temperature, and chemistry every 15 minutes. 80% of Denver's supply passes this point." },
+  { id: "dam-strontia", zoom: 11.8, pitch: 62, bearing: -30,
+    text: "Strontia Springs Dam, in Waterton Canyon. From here water is piped to the Foothills and Marston treatment plants. Aurora drinks from this reservoir too." },
+  { id: "plant-foothills", zoom: 11.4, pitch: 55,
+    text: "The Foothills plant treats up to 280 million gallons a day, then sends it into the city's pipes. Mountain snow, now tap water." },
+  { id: "moffat", center: [-105.55, 39.87], zoom: 9.4, pitch: 55, bearing: -20,
+    text: "There is a second, northern route: the Moffat Tunnel carries Fraser River water under the divide at Winter Park to Gross Reservoir, Ralston, and the new Northwater plant." },
+  { view: HOME,
+    title: "The whole machine",
+    text: "Snow stations forecast it, reservoirs store it, tunnels move it, gages watch it, plants finish it. Click any marker to see what it is measuring right now." },
+];
+
+function tourGo(i) {
+  state.tourStep = i;
+  const step = TOUR[i];
+  const target = step.id ? state.byId[step.id] : null;
+  const view = step.view || {
+    center: step.center || [target.lon, target.lat],
+    zoom: step.zoom || 10.5, pitch: step.pitch || 58, bearing: step.bearing || 0,
+  };
+  map.flyTo({ ...view, speed: 0.75, essential: true });
+  const detail = document.getElementById("detail");
+  detail.innerHTML = `
+    <h2>${step.title || (target ? target.name : "")}</h2>
+    <div class="kind">Stop ${i + 1} of ${TOUR.length}</div>
+    <p>${step.text}</p>`;
+  document.getElementById("tour-back").disabled = i === 0;
+  document.getElementById("tour-next").textContent = i === TOUR.length - 1 ? "Finish" : "Next →";
+}
+
+function tourExit() {
+  state.tourStep = -1;
+  document.getElementById("tourbar").style.display = "none";
+  document.getElementById("tour-start").style.display = "block";
+  showIntro();
+  map.flyTo({ ...HOME, speed: 0.75 });
+}
+
+document.getElementById("tour-start").onclick = () => {
+  document.getElementById("tour-start").style.display = "none";
+  document.getElementById("tourbar").style.display = "flex";
+  tourGo(0);
+};
+document.getElementById("tour-next").onclick = () =>
+  state.tourStep >= TOUR.length - 1 ? tourExit() : tourGo(state.tourStep + 1);
+document.getElementById("tour-back").onclick = () => state.tourStep > 0 && tourGo(state.tourStep - 1);
+document.getElementById("tour-exit").onclick = tourExit;
+
+const STORM = {
+  frames: [], flow: [], turb: [], captions: [],
+  idx: 0, timer: null,
+  view: { center: [-105.42, 39.3], zoom: 8.5, pitch: 42, bearing: 0 },
+  msPerFrame: 400,
+};
+
+function parseSeriesFile(file, param) {
+  const ts = file.value.timeSeries.find((t) => t.variable.variableCode[0].value === param);
+  return ts.values[0].value
+    .map((r) => ({ t: r.dateTime, v: parseFloat(r.value) }))
+    .filter((r) => isFinite(r.v));
+}
+
+async function loadStorm() {
+  if (STORM.frames.length) return;
+  const [turbFile, flowFile] = await Promise.all([
+    fetchJson("strontia-brief/series/06707525-turbidity-conductance-aug14-15.json"),
+    fetchJson("strontia-brief/series/06701900-discharge-aug14-15.json"),
+  ]);
+  STORM.turb = parseSeriesFile(turbFile, "63680");
+  STORM.flow = parseSeriesFile(flowFile, "00060");
+  STORM.frames = STORM.turb.map((d) => new Date(d.t));
+  STORM.captions = buildCaptions();
+}
+
+function frameIndexAt(hour, minute, day) {
+  return STORM.frames.findIndex((f) => {
+    const mdt = new Date(f.getTime() - 6 * 3600000);
+    return mdt.getUTCDate() === day && mdt.getUTCHours() === hour && mdt.getUTCMinutes() === minute;
+  });
+}
+
+function buildCaptions() {
+  const turbPeak = STORM.turb.reduce((best, d, i) => (d.v > STORM.turb[best].v ? i : best), 0);
+  const flowRise = STORM.flow.findIndex((d) => d.v > STORM.flow[0].v * 1.5);
+  return [
+    { from: 0, text: "Midday, Aug 14: baseline. The river runs clear at about 2 FNU past the gage above Strontia." },
+    { from: Math.max(0, frameIndexAt(13, 0, 14)),
+      text: "1:00 PM: the conductance probe at the gage blips to 38 (its neighbors read about 300). It carries only the routine provisional flag. Nobody is paged." },
+    { from: Math.max(0, frameIndexAt(17, 0, 14)),
+      text: "Evening: monsoon cells train over the upper basin. Watch the radar paint the canyons above Strontia Springs." },
+    ...(flowRise > 0 ? [{ from: flowRise,
+      text: `The river answers: flow at the gage near Trumbull climbs past ${Math.round(STORM.flow[flowRise].v)} cubic ft/s.` }] : []),
+    { from: turbPeak,
+      text: `${formatFrameTime(STORM.frames[turbPeak])}: turbidity spikes to ${Math.round(STORM.turb[turbPeak].v)} FNU, from a baseline of 2. The sediment pulse is minutes from Strontia Springs Reservoir.` },
+    { from: Math.min(turbPeak + 12, STORM.frames.length - 1),
+      text: "The pulse decays through Aug 15, but the water that carried it is already in the reservoir, headed for the treatment plants." },
+  ];
+}
+
+function formatFrameTime(date) {
+  return date.toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short",
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " MDT";
+}
+
+function radarUrl(date) {
+  const stamp = date.toISOString().slice(0, 16).replace(/[-T:]/g, "");
+  return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ridge::USCOMP-N0Q-${stamp}/{z}/{x}/{y}.png`;
+}
+
+function setRadarFrame(date) {
+  const source = map.getSource("radar");
+  if (source && source.setTiles) { source.setTiles([radarUrl(date)]); return; }
+  if (map.getLayer("radar")) map.removeLayer("radar");
+  if (source) map.removeSource("radar");
+  map.addSource("radar", { type: "raster", tiles: [radarUrl(date)], tileSize: 256,
+    maxzoom: 10, attribution: "NEXRAD via Iowa State Mesonet" });
+  map.addLayer({ id: "radar", type: "raster", source: "radar",
+    paint: { "raster-opacity": 0.7, "raster-fade-duration": 0 } }, "basin-line");
+}
+
+const REPLAY_GAGES = ["gage-06701900", "gage-06707525"];
+
+function addReplayLabels() {
+  if (map.getLayer("replay-labels")) return;
+  map.addLayer({ id: "replay-labels", type: "symbol", source: "points",
+    filter: ["in", "id", ...REPLAY_GAGES],
+    layout: {
+      "text-field": ["get", "name"],
+      "text-font": ["Noto Sans Regular"],
+      "text-size": 12.5, "text-offset": [0, 1.1], "text-anchor": "top",
+      "text-allow-overlap": true,
+    },
+    paint: { "text-color": "#ffd166", "text-halo-color": "rgba(16,20,24,0.95)", "text-halo-width": 1.6 } });
+}
+
+function removeReplayLabels() {
+  if (map.getLayer("replay-labels")) map.removeLayer("replay-labels");
+}
+
+function currentCaption(i) {
+  let text = "";
+  for (const caption of STORM.captions) if (caption.from <= i) text = caption.text;
+  return text;
+}
+
+function replaySet(i) {
+  STORM.idx = i;
+  document.getElementById("replay-slider").value = i;
+  document.getElementById("replay-time").textContent = formatFrameTime(STORM.frames[i]);
+  document.getElementById("replay-caption").textContent = currentCaption(i);
+  setRadarFrame(STORM.frames[i]);
+  drawSpark(document.getElementById("replay-flow"), STORM.flow, "#3987e5", i);
+  drawSpark(document.getElementById("replay-turb"), STORM.turb, "#d95926", i);
+}
+
+function replayPlaying() { return STORM.timer !== null; }
+
+function replayPause() {
+  clearInterval(STORM.timer);
+  STORM.timer = null;
+  document.getElementById("replay-play").textContent = "Play";
+}
+
+function replayPlay() {
+  if (STORM.idx >= STORM.frames.length - 1) STORM.idx = 0;
+  STORM.timer = setInterval(() => {
+    STORM.idx >= STORM.frames.length - 1 ? replayPause() : replaySet(STORM.idx + 1);
+  }, STORM.msPerFrame);
+  document.getElementById("replay-play").textContent = "Pause";
+}
+
+async function replayStart() {
+  document.getElementById("tour-start").style.display = "none";
+  document.getElementById("replay-start").style.display = "none";
+  document.getElementById("detail").innerHTML = "";
+  document.getElementById("replaybar").style.display = "block";
+  document.getElementById("replay-caption").textContent = "Loading the storm record…";
+  map.flyTo({ ...STORM.view, speed: 0.9 });
+  try {
+    await loadStorm();
+  } catch (err) {
+    document.getElementById("replay-caption").textContent = "Could not load the storm series (" + err.message + ").";
+    return;
+  }
+  document.getElementById("replay-slider").max = STORM.frames.length - 1;
+  document.getElementById("replay-charts").innerHTML = `
+    <div class="spark-label">Flow at the gage near Trumbull, cubic ft/s</div>
+    <canvas class="spark" id="replay-flow"></canvas>
+    <div class="spark-label">Turbidity at the gage above Strontia, FNU</div>
+    <canvas class="spark" id="replay-turb"></canvas>`;
+  addReplayLabels();
+  replaySet(0);
+  replayPlay();
+}
+
+function replayExit() {
+  replayPause();
+  removeReplayLabels();
+  if (map.getLayer("radar")) map.removeLayer("radar");
+  if (map.getSource("radar")) map.removeSource("radar");
+  document.getElementById("replaybar").style.display = "none";
+  document.getElementById("tour-start").style.display = "block";
+  document.getElementById("replay-start").style.display = "block";
+  showIntro();
+  map.flyTo({ ...HOME, speed: 0.75 });
+}
+
+document.getElementById("replay-start").onclick = replayStart;
+document.getElementById("replay-exit").onclick = replayExit;
+document.getElementById("replay-play").onclick = () => replayPlaying() ? replayPause() : replayPlay();
+document.getElementById("replay-slider").oninput = (e) => replaySet(parseInt(e.target.value, 10));
+
+document.getElementById("open-dashboard").onclick = () => {
+  const frame = document.getElementById("dashboard-frame");
+  if (!frame.src) frame.src = "prediction-dashboard.html?embedded=1";
+  document.getElementById("dashboard-overlay").classList.add("open");
+};
+document.getElementById("dashboard-close").onclick = () => {
+  document.getElementById("dashboard-overlay").classList.remove("open");
+};
+
+map.on("load", () =>
+  loadEverything().catch((err) => {
+    document.getElementById("detail").innerHTML =
+      `<p class="note">Could not load the map data (${err.message}). ` +
+      `Serve this page with <code>python3 eddd/data/serve.py</code>; opening it straight off disk blocks the data files.</p>`;
+  })
+);
+</script>
+</body>
+</html>
