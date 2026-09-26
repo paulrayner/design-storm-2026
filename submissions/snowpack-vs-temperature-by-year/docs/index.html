@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Primary Meta Tags -->
+    <title>Visual Water - Hunter Software</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
+    <meta name="title" content="Visual Water - Hunter Software" />
+    <meta name="description" content="A hackathon project by Kirjsten, Peter, and Alex for the Explore DDD Conference 2026" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="visualwater.huntersoftware.team" />
+    <meta property="og:title" content="Visual Water - Hunter Software" />
+    <meta property="og:description" content="A hackathon project by Kirjsten, Peter, and Alex for the Explore DDD Conference 2026" />
+
+    <!-- X (Twitter) -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://visualwater.huntersoftware.team/" />
+    <meta property="twitter:title" content="Visual Water - Hunter Software" />
+    <meta property="twitter:description" content="A hackathon project by Kirjsten, Peter, and Alex for the Explore DDD Conference 2026" />
+
+    <!-- Meta Tags Generated with https://metatags.io -->
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <header>
+        <h2 id="chartTitle">Loading...</h2>
+        <h3 id="chartSubtitle"></h3>
+    </header>
+
+    <main>
+        <section id="loading-indicator">
+            Loading...
+        </section>
+        <section id="chart-1" class="chart"><h4 class="dynamic-header"></h4><canvas></canvas></section>
+        <section id="chart-2" class="chart"><h4 class="dynamic-header"></h4><canvas></canvas> </section>
+        <section id="notes">
+            <p>The precipitation is the cumulative average of the snow pack measurement for all stations</p>
+        </section>
+        <section id="qr">
+            <p>Link to this web page</p>
+            <img alt="QR Code to link to this website" src="qr.png"/>
+        </section>
+    </main>
+
+    <div class="footer">
+        <h1>Visual Water</h1>
+        <div>A hackathon project by Kirjsten, Peter, and Alex for the Explore DDD Conference 2026</div>
+        <div><a href="https://github.com/alexbird-hunterindustries/denver-water-visualization">Open source on GitHub</a></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
